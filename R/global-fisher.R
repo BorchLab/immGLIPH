@@ -50,8 +50,7 @@
                            verbose) {
 
   ## Load BLOSUM62 compatible amino acid pairs
-  BlosumVec <- NULL
-  utils::data("BlosumVec", envir = environment(), package = "immGLIPH")
+  BlosumVec <- .get_blosum_vec()
 
   ## Empty result template
   empty_df <- data.frame(
