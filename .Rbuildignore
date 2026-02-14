@@ -1,0 +1,8 @@
+^\.DS_Store$
+^\.claude$
+^\.git$
+^\.gitattributes$
+^\.github$
+^\.Rproj\.user$
+^.*\.Rproj$
+^LICENSE\.md$
