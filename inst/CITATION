@@ -1,0 +1,41 @@
+citHeader("To cite immGLIPH, please cite the original GLIPH papers:")
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Identifying specificity groups in the T cell receptor repertoire",
+  author   = c(
+    person("Jacob", "Glanville"),
+    person("Huang", "Huang"),
+    person("Allison", "Nau"),
+    person("Olivia", "Hatber"),
+    person("Reshma", "Patel"),
+    person("David", "Arendt"),
+    person("Clemencia", "Pinilla"),
+    person("Richard", "Houghten"),
+    person("David", "Gifford"),
+    person("Ralf", "Steinman"),
+    person("Mark", "Davis")
+  ),
+  journal  = "Nature",
+  year     = "2017",
+  volume   = "547",
+  pages    = "94--98",
+  doi      = "10.1038/nature22976"
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Analyzing the Mycobacterium tuberculosis immune response by T-cell receptor clustering with GLIPH2 and genome-wide antigen screening",
+  author   = c(
+    person("Huang", "Huang"),
+    person("Chunlin", "Wang"),
+    person("Florian", "Rubelt"),
+    person("Thomas", "Scriba"),
+    person("Mark", "Davis")
+  ),
+  journal  = "Nature Biotechnology",
+  year     = "2020",
+  volume   = "38",
+  pages    = "1194--1202",
+  doi      = "10.1038/s41587-020-0505-4"
+)
