@@ -35,8 +35,92 @@
                            no_cores,
                            verbose) {
 
-  ## Prepare V-gene lookup vectors when V-gene filtering is requested
+  if (verbose) message("Searching for global similarities (cutoff method).")
 
+  ## ---- immApex C++ fast path ------------------------------------------------
+  if (requireNamespace("immApex", quietly = TRUE)) {
+    return(.global_cutoff_immapex(seqs, motif_region, sequences,
+                                  gccutoff, global_vgene, verbose))
+  }
+
+  ## ---- Fallback: stringdist + foreach implementation ------------------------
+  .global_cutoff_stringdist(seqs, motif_region, sequences,
+                            gccutoff, global_vgene, no_cores, verbose)
+}
+
+#' immApex-accelerated global cutoff via buildNetwork()
+#' @keywords internal
+.global_cutoff_immapex <- function(seqs, motif_region, sequences,
+                                   gccutoff, global_vgene, verbose) {
+
+  ## Build input data frame when V-gene filtering is requested
+  if (global_vgene) {
+    ## Match V genes for each unique CDR3b
+    vgene_lookup <- sequences[!duplicated(sequences$CDR3b),
+                              c("CDR3b", "TRBV")]
+    input_df <- data.frame(
+      motif = motif_region,
+      CDR3b = seqs,
+      stringsAsFactors = FALSE
+    )
+    input_df <- merge(input_df, vgene_lookup, by = "CDR3b", all.x = TRUE)
+
+    edge_result <- immApex::buildNetwork(
+      input.data = input_df,
+      seq_col    = "motif",
+      v_col      = "TRBV",
+      threshold  = gccutoff,
+      filter.v   = TRUE,
+      ids        = input_df$CDR3b,
+      output     = "edges",
+      metric     = "hamming"
+    )
+  } else {
+    edge_result <- immApex::buildNetwork(
+      input.sequences = motif_region,
+      threshold       = gccutoff,
+      ids             = seqs,
+      output          = "edges",
+      metric          = "hamming"
+    )
+  }
+
+  ## Convert to expected format
+  if (!is.null(edge_result) && nrow(edge_result) > 0) {
+    edges <- data.frame(
+      V1   = edge_result$from,
+      V2   = edge_result$to,
+      type = "global",
+      stringsAsFactors = FALSE
+    )
+  } else {
+    edges <- data.frame(
+      V1   = character(0),
+      V2   = character(0),
+      type = character(0),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  ## Identify isolated sequences (no global neighbour)
+  connected <- unique(c(edges$V1, edges$V2))
+  not_in_global_ids <- which(!seqs %in% connected)
+
+  if (verbose) message(nrow(edges), " global edges found (cutoff method).")
+
+  list(
+    edges             = edges,
+    not_in_global_ids = as.integer(not_in_global_ids)
+  )
+}
+
+#' stringdist + foreach fallback for global cutoff
+#' @keywords internal
+.global_cutoff_stringdist <- function(seqs, motif_region, sequences,
+                                      gccutoff, global_vgene, no_cores,
+                                      verbose) {
+
+  ## Prepare V-gene lookup vectors when V-gene filtering is requested
   temp_seqs   <- c()
   temp_vgenes <- c()
   if (global_vgene) {
@@ -44,11 +128,8 @@
     temp_vgenes <- sequences$TRBV[which(sequences$CDR3b %in% temp_seqs)]
   }
 
-  if (verbose) message("Searching for global similarities (cutoff method).")
-
   ## ------------------------------------------------------------------
   ## Parallel loop: for every sequence compute Hamming distance to all
-
   ## others and identify neighbours within gccutoff
   ## ------------------------------------------------------------------
   res <- foreach::foreach(i = seq_along(seqs)) %dopar% {

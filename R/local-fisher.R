@@ -56,98 +56,121 @@
                           verbose) {
 
   ## -----------------------------------------------------------
-  ## Step 1: Identify all motifs in the reference database
+
+  ## Step 1 & 2: Find motifs in reference and sample sets
   ## -----------------------------------------------------------
-  if (verbose) message("Finding motifs in reference sequences...")
+  if (requireNamespace("immApex", quietly = TRUE)) {
+    ## ---- immApex C++ fast path: single-call with multithreading ----
+    if (verbose) message("Finding motifs in reference sequences (immApex)...")
+    ref_motifs_df <- immApex::calculateMotif(
+      input.sequences = refseqs_motif_region,
+      motif.lengths   = motif_length,
+      min.depth       = 1L,
+      discontinuous   = discontinuous_motifs,
+      nthreads        = no_cores
+    )
+    colnames(ref_motifs_df)[colnames(ref_motifs_df) == "frequency"] <- "count"
 
-  # Divide the sequences equally among all cores
-  overhang <- length(refseqs_motif_region) %% no_cores
-  id_list  <- list()
-  last_id  <- 0
-  next_id  <- 0
-  steps    <- (length(refseqs_motif_region) - overhang) / no_cores
+    if (verbose) message("Finding motifs in sample sequences (immApex)...")
+    motifs_df <- immApex::calculateMotif(
+      input.sequences = motif_region,
+      motif.lengths   = motif_length,
+      min.depth       = 1L,
+      discontinuous   = discontinuous_motifs,
+      nthreads        = no_cores
+    )
+    colnames(motifs_df)[colnames(motifs_df) == "frequency"] <- "count"
 
-  for (i in seq_len(no_cores)) {
-    next_id <- last_id + steps
-    if (overhang > 0) {
-      next_id <- next_id + 1
-      overhang <- overhang - 1
+  } else {
+    ## ---- Fallback: foreach chunking with stringdist backend ----
+    if (verbose) message("Finding motifs in reference sequences...")
+
+    # Divide the sequences equally among all cores
+    overhang <- length(refseqs_motif_region) %% no_cores
+    id_list  <- list()
+    last_id  <- 0
+    next_id  <- 0
+    steps    <- (length(refseqs_motif_region) - overhang) / no_cores
+
+    for (i in seq_len(no_cores)) {
+      next_id <- last_id + steps
+      if (overhang > 0) {
+        next_id <- next_id + 1
+        overhang <- overhang - 1
+      }
+      id_list[[i]] <- (last_id + 1):next_id
+      last_id <- next_id
     }
-    id_list[[i]] <- (last_id + 1):next_id
-    last_id <- next_id
-  }
 
-  # Receive all motifs in the reference sequences
-  ref_motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-    return(find_motifs(seqs = refseqs_motif_region[id_list[[i]]],
-                       q = motif_length,
-                       discontinuous = discontinuous_motifs))
-  }
-
-  # Convert the list into a more manageable data frame
-  ref_motifs_df <- NULL
-  for (i in seq_len(no_cores)) {
-    if (i == 1) {
-      ref_motifs_df <- ref_motifs_list[[i]]
-    } else {
-      ref_motifs_df <- merge(x = ref_motifs_df,
-                             y = ref_motifs_list[[i]],
-                             by = "motif",
-                             all = TRUE)
+    # Receive all motifs in the reference sequences
+    ref_motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
+      return(find_motifs(seqs = refseqs_motif_region[id_list[[i]]],
+                         q = motif_length,
+                         discontinuous = discontinuous_motifs))
     }
-  }
-  ref_motifs_df[is.na(ref_motifs_df)] <- 0
-  ref_motifs_df <- data.frame(
-    motif = ref_motifs_df$motif,
-    count = rowSums(data.frame(ref_motifs_df[, -1]))
-  )
 
-  ## -----------------------------------------------------------
-  ## Step 2: Identify all motifs in the sample set
-  ## -----------------------------------------------------------
-  if (verbose) message("Finding motifs in sample sequences...")
-
-  # Divide the sequences equally among all cores
-  overhang <- length(motif_region) %% no_cores
-  id_list  <- list()
-  last_id  <- 0
-  next_id  <- 0
-  steps    <- (length(motif_region) - overhang) / no_cores
-
-  for (i in seq_len(no_cores)) {
-    next_id <- last_id + steps
-    if (overhang > 0) {
-      next_id <- next_id + 1
-      overhang <- overhang - 1
+    # Convert the list into a more manageable data frame
+    ref_motifs_df <- NULL
+    for (i in seq_len(no_cores)) {
+      if (i == 1) {
+        ref_motifs_df <- ref_motifs_list[[i]]
+      } else {
+        ref_motifs_df <- merge(x = ref_motifs_df,
+                               y = ref_motifs_list[[i]],
+                               by = "motif",
+                               all = TRUE)
+      }
     }
-    id_list[[i]] <- (last_id + 1):next_id
-    last_id <- next_id
-  }
+    ref_motifs_df[is.na(ref_motifs_df)] <- 0
+    ref_motifs_df <- data.frame(
+      motif = ref_motifs_df$motif,
+      count = rowSums(data.frame(ref_motifs_df[, -1]))
+    )
 
-  # Receive all motifs in the sample sequences
-  motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-    return(find_motifs(seqs = motif_region[id_list[[i]]],
-                       q = motif_length,
-                       discontinuous = discontinuous_motifs))
-  }
+    if (verbose) message("Finding motifs in sample sequences...")
 
-  # Convert the list into a more manageable data frame
-  motifs_df <- NULL
-  for (i in seq_len(no_cores)) {
-    if (i == 1) {
-      motifs_df <- motifs_list[[i]]
-    } else {
-      motifs_df <- merge(x = motifs_df,
-                         y = motifs_list[[i]],
-                         by = "motif",
-                         all = TRUE)
+    # Divide the sequences equally among all cores
+    overhang <- length(motif_region) %% no_cores
+    id_list  <- list()
+    last_id  <- 0
+    next_id  <- 0
+    steps    <- (length(motif_region) - overhang) / no_cores
+
+    for (i in seq_len(no_cores)) {
+      next_id <- last_id + steps
+      if (overhang > 0) {
+        next_id <- next_id + 1
+        overhang <- overhang - 1
+      }
+      id_list[[i]] <- (last_id + 1):next_id
+      last_id <- next_id
     }
+
+    # Receive all motifs in the sample sequences
+    motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
+      return(find_motifs(seqs = motif_region[id_list[[i]]],
+                         q = motif_length,
+                         discontinuous = discontinuous_motifs))
+    }
+
+    # Convert the list into a more manageable data frame
+    motifs_df <- NULL
+    for (i in seq_len(no_cores)) {
+      if (i == 1) {
+        motifs_df <- motifs_list[[i]]
+      } else {
+        motifs_df <- merge(x = motifs_df,
+                           y = motifs_list[[i]],
+                           by = "motif",
+                           all = TRUE)
+      }
+    }
+    motifs_df[is.na(motifs_df)] <- 0
+    motifs_df <- data.frame(
+      motif = motifs_df$motif,
+      count = rowSums(data.frame(motifs_df[, -1]))
+    )
   }
-  motifs_df[is.na(motifs_df)] <- 0
-  motifs_df <- data.frame(
-    motif = motifs_df$motif,
-    count = rowSums(data.frame(motifs_df[, -1]))
-  )
 
   ## -----------------------------------------------------------
   ## Step 3: Compare motifs between sample and reference

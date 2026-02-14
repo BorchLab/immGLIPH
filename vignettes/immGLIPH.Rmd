@@ -1,0 +1,544 @@
+---
+title: "Getting Started with immGLIPH"
+author:
+  - name: Nick Borcherding
+    affiliation: Washington University in St. Louis
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{Getting Started with immGLIPH}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Introduction
+
+immGLIPH provides an R implementation of the GLIPH (Grouping of Lymphocyte
+Interactions by Paratope Hotspots) and GLIPH2 algorithms for clustering T cell
+receptors (TCRs) that are predicted to bind the same HLA-restricted peptide
+antigen.
+
+The package identifies TCR specificity groups by detecting statistically
+enriched CDR3$\beta$ motifs (local similarity) and structurally similar
+CDR3$\beta$ sequences (global similarity), then clusters them into convergence
+groups and scores each group for biological significance.
+
+**immGLIPH is an R implementation of existing algorithms. Users should cite
+the original publications:**
+
+- **GLIPH**: Glanville, J. et al. *Identifying specificity groups in the T cell
+  receptor repertoire.* Nature 547, 94--98 (2017).
+  [doi:10.1038/nature22976](https://doi.org/10.1038/nature22976)
+
+- **GLIPH2**: Huang, H. et al. *Analyzing the Mycobacterium tuberculosis immune
+  response by T-cell receptor clustering with GLIPH2 and genome-wide antigen
+  screening.* Nature Biotechnology 38, 1194--1202 (2020).
+  [doi:10.1038/s41587-020-0505-4](https://doi.org/10.1038/s41587-020-0505-4)
+
+## Installation
+
+immGLIPH can be installed from GitHub:
+
+```{r eval=FALSE}
+devtools::install_github("BorchLab/immGLIPH")
+```
+
+```{r}
+library(immGLIPH)
+```
+
+## Integration with the scRepertoire Ecosystem
+
+immGLIPH integrates with the
+[scRepertoire](https://github.com/BorchLab/scRepertoire) ecosystem through
+[immApex](https://github.com/BorchLab/immApex). This means `runGLIPH()` can
+directly accept:
+
+- **Seurat** objects with TCR information
+- **SingleCellExperiment** objects with TCR information
+- **combineTCR()** output lists from scRepertoire
+- Standard data frames or character vectors
+
+# Quick Start
+
+## Loading the Example Data
+
+immGLIPH includes a built-in dataset of ~2,000 unique TCRs of known
+specificity from Glanville et al. (2017):
+
+```{r}
+data("gliph_input_data")
+head(gliph_input_data)
+dim(gliph_input_data)
+```
+
+## Input Data Format
+
+`runGLIPH()` accepts a data frame with the following columns:
+
+| Column      | Required | Description |
+|:------------|:---------|:------------|
+| **CDR3b**   | Yes      | CDR3$\beta$ amino acid sequences |
+| **TRBV**    | No       | V-gene usage (e.g., "TRBV5-1") |
+| **patient** | No       | Donor/sample identifier |
+| **HLA**     | No       | HLA alleles, comma-separated |
+| **counts**  | No       | Clone frequency |
+
+Alternative column names are automatically recognized (e.g., `cdr3`, `v_gene`,
+`sample`, `clone_count`).
+
+# Working with Single-Cell Data
+
+When working with single-cell immune repertoire data, you can use
+scRepertoire to prepare your data and pass the output directly to immGLIPH.
+
+```{r eval=FALSE}
+library(scRepertoire)
+
+# After processing with cellranger/etc, combine contigs
+combined <- combineTCR(
+  contig_list,
+  samples = c("P1", "P2"),
+  cells = "T-AB"
+)
+
+# Pass scRepertoire output directly to runGLIPH
+results <- runGLIPH(combined, method = "gliph2")
+```
+
+For **Seurat** or **SingleCellExperiment** objects that already contain TCR
+metadata (e.g., added via `scRepertoire::combineExpression()`), immGLIPH
+extracts the receptor data automatically using `immApex::getIR()`:
+
+```{r eval=FALSE}
+library(Seurat)
+
+# Seurat object with TCR info in metadata
+results <- runGLIPH(seurat_obj, method = "gliph2", chains = "TRB")
+```
+
+# The `runGLIPH()` Function
+
+`runGLIPH()` is the unified entry point that replaces the legacy
+`turbo_gliph()`, `gliph2()`, and `gliph_combined()` functions.
+
+## Key Arguments
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `cdr3_sequences` | -- | Input data (data frame, vector, Seurat, SCE, or list) |
+| `method` | `"gliph2"` | Algorithm preset: `"gliph1"`, `"gliph2"`, or `"custom"` |
+| `sim_depth` | 1000 | Simulation depth (higher = more reproducible, slower) |
+| `n_cores` | 1 | Number of parallel cores |
+| `refdb_beta` | `"gliph_reference"` | Reference database (built-in or custom data frame) |
+| `local_similarities` | `TRUE` | Search for local (motif-based) similarities |
+| `global_similarities` | `TRUE` | Search for global (structural) similarities |
+| `structboundaries` | `TRUE` | Trim structural boundaries before comparison |
+| `accept_CF` | `TRUE` | Filter to sequences starting with C, ending with F |
+
+## Method Presets
+
+The `method` parameter configures a coordinated set of algorithm choices:
+
+| Setting | `"gliph1"` | `"gliph2"` | `"custom"` |
+|:--------|:-----------|:-----------|:-----------|
+| Local method | Repeated random sampling | Fisher's exact test | User-defined |
+| Global method | Hamming distance cutoff | Struct-based + Fisher | User-defined |
+| Clustering | Connected components | Per-motif isolated | User-defined |
+| Scoring | GLIPH1 formula | GLIPH2 formula | User-defined |
+
+## Running GLIPH2 (Default)
+
+```{r}
+data("gliph_input_data")
+
+res_gliph2 <- runGLIPH(
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  method         = "gliph2",
+  sim_depth      = 100,
+  n_cores        = 1
+)
+```
+
+## Running GLIPH1
+
+```{r}
+res_gliph1 <- runGLIPH(
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  method         = "gliph1",
+  sim_depth      = 100,
+  n_cores        = 1
+)
+```
+
+## Understanding the Output
+
+The output is a list with the following elements:
+
+```{r}
+names(res_gliph2)
+```
+
+### Cluster Properties
+
+The `cluster_properties` data frame summarizes each convergence group with
+enrichment scores:
+
+```{r}
+head(res_gliph2$cluster_properties)
+```
+
+### Cluster Membership
+
+The `cluster_list` is a named list where each element contains the member
+TCRs of a convergence group:
+
+```{r}
+# Number of convergence groups
+length(res_gliph2$cluster_list)
+
+# Members of the first cluster
+head(res_gliph2$cluster_list[[1]])
+```
+
+### Motif Enrichment
+
+The `motif_enrichment` element contains the locally enriched motifs:
+
+```{r}
+# Significantly enriched motifs
+head(res_gliph2$motif_enrichment$selected_motifs)
+```
+
+### Network Edges
+
+The `connections` data frame contains the edge list representing the TCR
+similarity network:
+
+```{r}
+head(res_gliph2$connections)
+```
+
+# Customizing the Analysis
+
+## Using `method = "custom"`
+
+The `"custom"` method allows independent control over each algorithmic
+component:
+
+```{r eval=FALSE}
+res_custom <- runGLIPH(
+  cdr3_sequences  = gliph_input_data[seq_len(200), ],
+  method          = "custom",
+  local_method    = "fisher",    # or "rrs"
+  global_method   = "cutoff",    # or "fisher"
+  clustering_method = "GLIPH1.0", # or "GLIPH2.0"
+  scoring_method  = "GLIPH2.0",  # or "GLIPH1.0"
+  sim_depth       = 100,
+  n_cores         = 1
+)
+```
+
+## Adjusting Significance Thresholds
+
+For the Fisher-based local method (GLIPH2), you can adjust:
+
+- **`lcminp`**: Maximum p-value for a motif to be considered enriched
+  (default 0.01)
+- **`lcminove`**: Minimum fold-enrichment per motif length
+  (default `c(1000, 100, 10)` for 2-mers, 3-mers, 4-mers)
+- **`kmer_mindepth`**: Minimum motif observations in the sample (default 3)
+
+```{r eval=FALSE}
+res_strict <- runGLIPH(
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  method         = "gliph2",
+  lcminp         = 0.001,            # Stricter p-value
+  lcminove       = c(10000, 1000, 100), # Higher fold-change
+  sim_depth      = 100,
+  n_cores        = 1
+)
+```
+
+## Using a Custom Reference Database
+
+By default, immGLIPH uses the built-in reference of 162,165 naive CDR3$\beta$
+sequences. You can supply your own:
+
+```{r eval=FALSE}
+custom_ref <- data.frame(
+  CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", ...),
+  TRBV  = c("TRBV5-1", "TRBV6-2", ...)
+)
+
+res <- runGLIPH(
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  refdb_beta     = custom_ref,
+  method         = "gliph2",
+  sim_depth      = 100,
+  n_cores        = 1
+)
+```
+
+# Motif Discovery with `find_motifs()`
+
+The `find_motifs()` function searches for continuous and discontinuous k-mer
+motifs in a set of CDR3 sequences. It is used internally by `runGLIPH()` but
+can also be called independently.
+
+## Key Arguments
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `seqs` | -- | Character vector of CDR3$\beta$ sequences |
+| `q` | `2:4` | Motif lengths to search |
+| `kmer_mindepth` | `NULL` | Minimum motif count to return |
+| `discontinuous` | `FALSE` | Include discontinuous motifs (with one variable position) |
+
+## Example
+
+```{r}
+data("gliph_input_data")
+sample_seqs <- as.character(gliph_input_data$CDR3b[seq_len(100)])
+
+# Find all 3-mers appearing at least 5 times
+motifs <- find_motifs(seqs = sample_seqs, q = 3, kmer_mindepth = 5)
+head(motifs[order(motifs$V1, decreasing = TRUE), ])
+```
+
+Including discontinuous motifs (e.g., `C.S` where `.` is any amino acid):
+
+```{r}
+disc_motifs <- find_motifs(
+  seqs         = sample_seqs,
+  q            = 2,
+  kmer_mindepth = 5,
+  discontinuous = TRUE
+)
+# Show discontinuous motifs (those containing a dot)
+disc_only <- disc_motifs[grep("\\.", disc_motifs$motif), ]
+head(disc_only[order(disc_only$V1, decreasing = TRUE), ])
+```
+
+# Cluster Scoring with `cluster_scoring()`
+
+The `cluster_scoring()` function evaluates convergence groups using up to five
+metrics. This is called automatically by `runGLIPH()`, but can be re-run with
+different parameters on existing results.
+
+## Key Arguments
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `cluster_list` | -- | Named list of cluster data frames (from `runGLIPH()$cluster_list`) |
+| `cdr3_sequences` | -- | Original input data frame |
+| `refdb_beta` | `"gliph_reference"` | Reference database |
+| `gliph_version` | 1 | Scoring formula: 1 (GLIPH) or 2 (GLIPH2) |
+| `sim_depth` | 1000 | Resampling depth for score estimation |
+
+## Scoring Components
+
+The total score is derived from up to five components (depending on available
+data):
+
+1. **`network.size.score`**: Probability of observing a cluster of this size
+   by chance
+2. **`cdr3.length.score`**: Enrichment of CDR3 length distribution within the
+   cluster
+3. **`vgene.score`**: Enrichment of V-gene usage (requires TRBV column)
+4. **`clonal.expansion.score`**: Enrichment of expanded clones (requires counts
+   column)
+5. **`hla.score`**: Enrichment of shared HLA alleles among donors (requires
+   patient + HLA columns)
+
+## Example
+
+```{r eval=FALSE}
+# Re-score with GLIPH2 formula and higher simulation depth
+rescored <- cluster_scoring(
+  cluster_list   = res_gliph1$cluster_list,
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  refdb_beta     = "gliph_reference",
+  gliph_version  = 2,
+  sim_depth      = 500,
+  n_cores        = 1
+)
+head(rescored)
+```
+
+# De Novo TCR Generation with `de_novo_TCRs()`
+
+The `de_novo_TCRs()` function generates artificial CDR3$\beta$ sequences that
+resemble the positional amino acid composition of a given convergence group.
+This can be used to predict novel TCR sequences with similar binding
+characteristics.
+
+## Key Arguments
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `convergence_group_tag` | -- | Tag identifying the cluster (from `cluster_properties$tag`) |
+| `clustering_output` | `NULL` | Output list from `runGLIPH()` |
+| `result_folder` | `""` | Alternative: load from files |
+| `sims` | 100,000 | Number of de novo sequences to generate |
+| `num_tops` | 1,000 | Return top N highest-scoring sequences |
+| `normalization` | `FALSE` | Normalize scores against the reference database |
+| `make_figure` | `FALSE` | Plot score vs. rank |
+
+## Example
+
+```{r eval=FALSE}
+# Generate de novo TCRs for the top convergence group
+de_novo <- de_novo_TCRs(
+  convergence_group_tag = res_gliph1$cluster_properties$tag[1],
+  clustering_output     = res_gliph1,
+  sims                  = 10000,
+  num_tops              = 100,
+  make_figure           = TRUE,
+  n_cores               = 1
+)
+
+# Top predicted sequences
+head(de_novo$de_novo_sequences)
+
+# Positional weight matrix used for generation
+head(de_novo$PWM_Scoring)
+```
+
+# Network Visualization with `plot_network()`
+
+The `plot_network()` function creates an interactive network visualization of
+the convergence groups using the visNetwork package.
+
+## Key Arguments
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `clustering_output` | `NULL` | Output list from `runGLIPH()` |
+| `color_info` | `"total.score"` | Column name for node coloring |
+| `color_palette` | `viridis::viridis` | Color palette function |
+| `local_edge_color` | `"orange"` | Color for local similarity edges |
+| `global_edge_color` | `"#68bceb"` | Color for global similarity edges |
+| `size_info` | `NULL` | Column name for node sizing |
+| `cluster_min_size` | 3 | Minimum cluster size to display |
+
+## Example
+
+```{r eval=FALSE}
+plot_network(
+  clustering_output = res_gliph2,
+  color_info        = "total.score",
+  cluster_min_size  = 3,
+  n_cores           = 1
+)
+```
+
+You can also color nodes by donor/patient:
+
+```{r eval=FALSE}
+plot_network(
+  clustering_output = res_gliph2,
+  color_info        = "patient",
+  cluster_min_size  = 3,
+  n_cores           = 1
+)
+```
+
+# Loading Saved Results with `loadGLIPH()`
+
+If you saved results to disk using `result_folder`, you can reload them:
+
+```{r eval=FALSE}
+# Save results
+res <- runGLIPH(
+  cdr3_sequences = gliph_input_data,
+  method         = "gliph2",
+  result_folder  = "my_results/",
+  n_cores        = 1
+)
+
+# Later, reload
+reloaded <- loadGLIPH(result_folder = "my_results/")
+```
+
+# Saving Results to Disk
+
+When `result_folder` is specified, `runGLIPH()` writes several output files:
+
+| File | Description |
+|:-----|:------------|
+| `local_similarities.txt` | Enriched motifs |
+| `all_motifs.txt` | All tested motifs with statistics |
+| `clone_network.txt` | Network edge list |
+| `convergence_groups.txt` | Cluster properties and scores |
+| `cluster_member_details.txt` | Full member information per cluster |
+| `parameters.txt` | All parameters used |
+
+# Performance
+
+## Accelerated Computation with immApex
+
+When [immApex](https://github.com/BorchLab/immApex) is installed, immGLIPH
+automatically uses its C++-accelerated backends for two computationally
+intensive steps:
+
+1. **Motif enumeration** (`find_motifs()`): Uses `immApex::calculateMotif()`
+   with OpenMP multithreading instead of the pure-R `stringdist::qgrams()`
+   approach.
+
+2. **Global Hamming distance network** (GLIPH1 method): Uses
+   `immApex::buildNetwork()` to compute pairwise distances in a single C++
+   call, replacing the `foreach`-based parallel loop over
+   `stringdist::stringdist()`.
+
+If immApex is not installed, immGLIPH falls back to the original pure-R
+implementations transparently---no code changes are needed.
+
+```{r eval=FALSE}
+# Install immApex for performance acceleration
+devtools::install_github("BorchLab/immApex")
+```
+
+# Tips and Best Practices
+
+1. **Start with GLIPH2**: The Fisher-based approach is generally more
+   statistically rigorous than repeated random sampling.
+
+2. **Sample size matters**: GLIPH works best with >200 unique CDR3$\beta$
+   sequences. Very small samples may yield few or no convergence groups.
+
+3. **Include V-gene information**: When available, TRBV data improves both
+   global similarity detection and scoring accuracy.
+
+4. **Adjust `sim_depth`**: For publication-quality results, use
+   `sim_depth >= 1000`. For exploratory analysis, `sim_depth = 100` is faster.
+
+5. **Parallelization**: For large datasets (>5,000 sequences), set
+   `n_cores > 1` to use parallel processing.
+
+6. **Install immApex**: For best performance, install immApex to enable
+   C++-accelerated motif enumeration and network construction (see
+   Performance section above).
+
+7. **Custom references**: For mouse data or specialized repertoires, provide a
+   custom reference database via `refdb_beta`.
+
+# Session Info
+
+```{r}
+sessionInfo()
+```
