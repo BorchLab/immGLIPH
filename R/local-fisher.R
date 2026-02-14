@@ -104,9 +104,9 @@
 
     # Receive all motifs in the reference sequences
     ref_motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-      return(find_motifs(seqs = refseqs_motif_region[id_list[[i]]],
-                         q = motif_length,
-                         discontinuous = discontinuous_motifs))
+      return(findMotifs(seqs = refseqs_motif_region[id_list[[i]]],
+                        q = motif_length,
+                        discontinuous = discontinuous_motifs))
     }
 
     # Convert the list into a more manageable data frame
@@ -148,9 +148,9 @@
 
     # Receive all motifs in the sample sequences
     motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-      return(find_motifs(seqs = motif_region[id_list[[i]]],
-                         q = motif_length,
-                         discontinuous = discontinuous_motifs))
+      return(findMotifs(seqs = motif_region[id_list[[i]]],
+                        q = motif_length,
+                        discontinuous = discontinuous_motifs))
     }
 
     # Convert the list into a more manageable data frame

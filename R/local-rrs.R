@@ -77,7 +77,7 @@
 
   ## ---- Step 1: Find motifs in the sample set ----------------------------
   if (verbose) message("Computing motif frequency in sample set.")
-  discovery <- find_motifs(
+  discovery <- findMotifs(
     seqs         = motif_region,
     q            = motif_length,
     discontinuous = discontinuous_motifs
@@ -100,7 +100,7 @@
       lengths_vgenes_list      = lengths_vgenes_list
     )
 
-    sim <- find_motifs(
+    sim <- findMotifs(
       seqs         = motif_sample,
       q            = motif_length,
       discontinuous = discontinuous_motifs
