@@ -213,6 +213,7 @@
 #' \doi{10.1038/s41587-020-0505-4}
 #'
 #' @examples
+#' \dontrun{
 #' utils::data("gliph_input_data")
 #' res <- runGLIPH(
 #'   cdr3_sequences = gliph_input_data[seq_len(200), ],
@@ -220,6 +221,7 @@
 #'   sim_depth = 50,
 #'   n_cores = 1
 #' )
+#' }
 #'
 #' @import foreach
 #' @export
@@ -362,7 +364,8 @@ runGLIPH <- function(cdr3_sequences,
     min_seq_length = min_seq_length,
     verbose        = verbose
   )
-  refseqs <- ref_result$refseqs
+  refseqs    <- ref_result$refseqs
+  refseqs_df <- ref_result$refseqs_df
 
   ## ---- Prepare motif regions ----
   seqs <- unique(sequences$CDR3b)
@@ -408,8 +411,8 @@ runGLIPH <- function(cdr3_sequences,
           motif_region_vgenes_list[[act_vgene]] <-
             sum(sequences$TRBV == act_vgene)
           ref_motif_vgenes_id_list[[act_vgene]] <-
-            which(unique(refseqs$CDR3b) %in%
-                    refseqs$CDR3b[refseqs$TRBV == act_vgene])
+            which(unique(refseqs_df$CDR3b) %in%
+                    refseqs_df$CDR3b[refseqs_df$TRBV == act_vgene])
         }
       }
       if (cdr3_len_stratify) {
@@ -907,6 +910,8 @@ runGLIPH <- function(cdr3_sequences,
 
 
 #' @rdname runGLIPH
+#' @param ... Arguments passed to \code{runGLIPH()} by the deprecated
+#'   wrapper functions.
 #' @section Deprecated Functions:
 #' \code{turbo_gliph}, \code{gliph2}, and \code{gliph_combined} are
 #' deprecated aliases. Use \code{runGLIPH()} instead.

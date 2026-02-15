@@ -81,6 +81,7 @@
 #' enrichment, clonal expansion enrichment, and common HLA enrichment).
 #'
 #' @examples
+#' \dontrun{
 #' utils::data("gliph_input_data")
 #'
 #' res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200), ],
@@ -94,6 +95,7 @@
 #'     gliph_version = 1,
 #'     sim_depth = 100,
 #'     n_cores = 1)
+#' }
 #'
 #' @references Glanville, Jacob, et al.
 #' "Identifying specificity groups in the T cell receptor repertoire." Nature 547.7661 (2017): 94.

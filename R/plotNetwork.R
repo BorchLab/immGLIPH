@@ -45,13 +45,16 @@
 #' @return A `visNetwork` object containing the interactive network graph.
 #'
 #' @examples
+#' \dontrun{
 #' utils::data("gliph_input_data")
-#' res <- turbo_gliph(cdr3_sequences = gliph_input_data[seq_len(200),],
-#'                    sim_depth = 100,
-#'                    n_cores = 1)
+#' res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
+#'                 method = "gliph1",
+#'                 sim_depth = 100,
+#'                 n_cores = 1)
 #'
 #' plotNetwork(clustering_output = res,
 #'             n_cores = 1)
+#' }
 #'
 #' @import viridis foreach grDevices
 #' @export
