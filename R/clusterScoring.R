@@ -219,9 +219,8 @@ clusterScoring <- function(cluster_list,
   utils::data(ref_cluster_sizes, envir = environment(), package = "immGLIPH")
   ref_cluster_sizes <- ref_cluster_sizes[[ref_cluster_size]]
 
-  reference_list <- .get_reference_list()
-
-  if(is.character(refdb_beta) && refdb_beta %in% names(reference_list)){
+  if(is.character(refdb_beta) && refdb_beta %in% .valid_reference_names()){
+    reference_list <- .get_reference_list()
     refdb_name <- refdb_beta
     vgene_ref_frequencies <- reference_list[[refdb_name]]$vgene_frequencies$freq
     cdr3_length_ref_frequencies <- reference_list[[refdb_name]]$cdr3_length_frequencies$freq
@@ -231,6 +230,7 @@ clusterScoring <- function(cluster_list,
       vgene_ref_frequencies <- as.data.frame(table(refdb_beta$TRBV))
       vgene_ref_frequencies <- vgene_ref_frequencies$Freq/sum(vgene_ref_frequencies$Freq)
     } else {
+      reference_list <- .get_reference_list()
       vgene_ref_frequencies <- reference_list[["gliph_reference"]]$vgene_frequencies$freq
     }
     cdr3_length_ref_frequencies <- as.data.frame(table(nchar(refdb_beta$CDR3b)))
