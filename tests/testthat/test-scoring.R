@@ -7,6 +7,13 @@ test_that("clusterScoring validates input types", {
                "class 'data.frame'")
 })
 
+test_that("clusterScoring validates refdb_beta", {
+  expect_error(clusterScoring(cluster_list = list(),
+                               cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF"),
+                               refdb_beta = "nonexistent_ref"),
+               "refdb_beta must be")
+})
+
 test_that("clusterScoring validates gliph_version", {
   expect_error(clusterScoring(cluster_list = list(),
                                cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF"),

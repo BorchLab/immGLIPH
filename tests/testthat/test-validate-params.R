@@ -1,7 +1,7 @@
 test_that(".validate_params returns all parameters with defaults", {
   result <- immGLIPH:::.validate_params()
   expect_type(result, "list")
-  expect_equal(result$refdb_beta, "gliph_reference")
+  expect_equal(result$refdb_beta, "human_v2.0_CD48")
   expect_equal(result$sim_depth, 1000)
   expect_equal(result$lcminp, 0.01)
   expect_equal(result$motif_length, c(2, 3, 4))
@@ -13,6 +13,13 @@ test_that(".validate_params rejects bad refdb_beta", {
                "refdb_beta must be")
   expect_error(immGLIPH:::.validate_params(refdb_beta = "invalid_name"),
                "refdb_beta must be")
+})
+
+test_that(".validate_params accepts all built-in reference names", {
+  for (nm in immGLIPH:::.valid_reference_names()) {
+    result <- immGLIPH:::.validate_params(refdb_beta = nm)
+    expect_equal(result$refdb_beta, nm)
+  }
 })
 
 test_that(".validate_params accepts data frame refdb_beta", {
