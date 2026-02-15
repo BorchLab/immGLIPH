@@ -227,7 +227,10 @@ getGLIPHreference <- function(force_download = FALSE, verbose = TRUE) {
 #' @return Character vector of AA pair strings (e.g. \code{"AA"}, \code{"AS"}).
 #' @keywords internal
 .get_blosum_vec <- function() {
-    mat <- immApex::immapex_blosum.pam.matrices[["BLOSUM62"]]
+    env <- new.env(parent = emptyenv())
+    utils::data("immapex_blosum.pam.matrices", package = "immApex",
+                envir = env)
+    mat <- env[["immapex_blosum.pam.matrices"]][["BLOSUM62"]]
     idx <- which(mat >= 0, arr.ind = TRUE)
     paste0(rownames(mat)[idx[, 1]], colnames(mat)[idx[, 2]])
 }
