@@ -98,6 +98,7 @@
   clone_network[] <- lapply(clone_network, as.character)
 
   ## ---- Build tuple network ----
+  x <- NULL
   temp_clone_network <- foreach::foreach(
     x = seq_len(nrow(clone_network))
   ) %dopar% {
@@ -448,6 +449,7 @@
     ## Load BLOSUM vector for global filtering
     BlosumVec <- .get_blosum_vec()
 
+    i <- NULL
     cluster_list <- foreach::foreach(
       i = seq_len(nrow(merged_clusters))
     ) %dopar% {

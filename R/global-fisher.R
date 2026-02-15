@@ -81,6 +81,7 @@
   sample_seqs$tag        <- sample_seqs$struct
 
   ## Expand: for each position, replace that position with "%"
+  i <- NULL
   exp_sample_seqs <- foreach::foreach(
     i = seq_len(max(sample_seqs$nchar)),
     .combine = rbind
