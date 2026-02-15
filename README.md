@@ -1,5 +1,10 @@
 # immGLIPH
 
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/ncborcherding/immGLIPH/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ncborcherding/immGLIPH/actions/workflows/R-CMD-check.yaml)
+  [![Codecov test coverage](https://codecov.io/gh/ncborcherding/immGLIPH/graph/badge.svg)](https://app.codecov.io/gh/ncborcherding/immGLIPH)
+<!-- badges: end -->
+
 An R implementation of the **GLIPH** and **GLIPH2** algorithms for clustering
 T cell receptors (TCRs) predicted to bind the same HLA-restricted peptide
 antigen.
