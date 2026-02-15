@@ -76,7 +76,7 @@
       filter.v   = TRUE,
       ids        = input_df$CDR3b,
       output     = "edges",
-      metric     = "hamming"
+      dist_type  = "hamming"
     )
   } else {
     edge_result <- buildNet(
@@ -84,7 +84,7 @@
       threshold       = gccutoff,
       ids             = seqs,
       output          = "edges",
-      metric          = "hamming"
+      dist_type       = "hamming"
     )
   }
 
