@@ -1,3 +1,14 @@
+#' Valid built-in reference database names
+#'
+#' @return Character vector of valid reference database names.
+#' @keywords internal
+.valid_reference_names <- function() {
+    c("human_v1.0_CD4", "human_v1.0_CD8", "human_v1.0_CD48",
+      "human_v2.0_CD4", "human_v2.0_CD8", "human_v2.0_CD48",
+      "mouse_v1.0_CD4", "mouse_v1.0_CD8", "mouse_v1.0_CD48",
+      "gliph_reference")
+}
+
 #' Load and prepare reference database
 #'
 #' Handles both named reference databases and user-provided data frames.

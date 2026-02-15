@@ -27,7 +27,7 @@
 #' @param boost_local_significance Germline boost
 #' @return List of validated (and possibly adjusted) parameter values
 #' @keywords internal
-.validate_params <- function(refdb_beta = "gliph_reference",
+.validate_params <- function(refdb_beta = "human_v2.0_CD48",
                              v_usage_freq = NULL,
                              cdr3_length_freq = NULL,
                              ref_cluster_size = "original",
@@ -53,12 +53,15 @@
 
     # refdb_beta
     if (!is.data.frame(refdb_beta)) {
+        valid_names <- .valid_reference_names()
         if (length(refdb_beta) != 1 || !is.character(refdb_beta)) {
-            stop("refdb_beta must be a data frame or 'gliph_reference'.",
+            stop("refdb_beta must be a data frame or one of: ",
+                 paste(sQuote(valid_names), collapse = ", "), ".",
                  call. = FALSE)
         }
-        if (!(refdb_beta %in% c("gliph_reference"))) {
-            stop("refdb_beta must be a data frame or 'gliph_reference'.",
+        if (!(refdb_beta %in% valid_names)) {
+            stop("refdb_beta must be a data frame or one of: ",
+                 paste(sQuote(valid_names), collapse = ", "), ".",
                  call. = FALSE)
         }
     }

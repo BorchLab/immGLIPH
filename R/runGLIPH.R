@@ -37,10 +37,17 @@
 #' @param result_folder Character. Path to output folder. If \code{""},
 #'   results are not saved to disk. **Default:** \code{""}
 #' @param refdb_beta Character or \code{data.frame}. Reference database for
-#'   motif enrichment testing. Use \code{"gliph_reference"} for the built-in
-#'   naive repertoire (162,165 CDR3b sequences). Alternatively, supply a
-#'   \code{data.frame} with CDR3b in the first column and optional V-gene in
-#'   the second. **Default:** \code{"gliph_reference"}
+#'   motif enrichment testing. Built-in databases include
+#'   \code{"human_v1.0_CD4"}, \code{"human_v1.0_CD8"},
+#'   \code{"human_v1.0_CD48"}, \code{"human_v2.0_CD4"},
+#'   \code{"human_v2.0_CD8"}, \code{"human_v2.0_CD48"},
+#'   \code{"mouse_v1.0_CD4"}, \code{"mouse_v1.0_CD8"},
+#'   \code{"mouse_v1.0_CD48"}, and the legacy alias
+#'   \code{"gliph_reference"} (= \code{"human_v1.0_CD48"}).
+#'   Alternatively, supply a \code{data.frame} with CDR3b in the first
+#'   column and optional V-gene in the second.
+#'   See \code{\link{reference_list}} for details.
+#'   **Default:** \code{"human_v2.0_CD48"}
 #' @param v_usage_freq \code{data.frame} or \code{NULL}. V-gene frequencies
 #'   for scoring. If \code{NULL}, built-in defaults are used.
 #'   **Default:** \code{NULL}
@@ -220,7 +227,7 @@ runGLIPH <- function(cdr3_sequences,
                      method = c("gliph2", "gliph1", "custom"),
                      chains = "TRB",
                      result_folder = "",
-                     refdb_beta = "gliph_reference",
+                     refdb_beta = "human_v2.0_CD48",
                      v_usage_freq = NULL,
                      cdr3_length_freq = NULL,
                      ref_cluster_size = "original",

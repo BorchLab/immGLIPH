@@ -30,14 +30,15 @@
 #' @param refdb_beta A \code{character} string or \code{data.frame}
 #' specifying the reference database. When a \code{data.frame} is
 #' supplied, CDR3b sequences must be in the first column and V-gene
-#' information (if available) in the second column. The following
-#' keyword may be used to select a built-in database:
-#' \itemize{
-#'   \item{\code{"gliph_reference"}:}{ 162,165 CDR3b sequences of
-#'     naive human CD4+ or CD8+ T cells from two individuals (GLIPH
-#'     publication).}
-#' }
-#' \strong{Default:} \code{"gliph_reference"}
+#' information (if available) in the second column. Built-in databases
+#' include \code{"human_v1.0_CD4"}, \code{"human_v1.0_CD8"},
+#' \code{"human_v1.0_CD48"}, \code{"human_v2.0_CD4"},
+#' \code{"human_v2.0_CD8"}, \code{"human_v2.0_CD48"},
+#' \code{"mouse_v1.0_CD4"}, \code{"mouse_v1.0_CD8"},
+#' \code{"mouse_v1.0_CD48"}, and the legacy alias
+#' \code{"gliph_reference"} (= \code{"human_v1.0_CD48"}).
+#' See \code{\link{reference_list}} for details.
+#' \strong{Default:} \code{"human_v2.0_CD48"}
 #' @param v_usage_freq A \code{data.frame} with V-gene alleles in the
 #' first column and their naive-repertoire frequencies in the second
 #' column. \strong{Default:} \code{NULL}
@@ -89,7 +90,7 @@
 #' scoring_results <- clusterScoring(
 #'     cluster_list = res$cluster_list,
 #'     cdr3_sequences = gliph_input_data[seq_len(200), ],
-#'     refdb_beta = "gliph_reference",
+#'     refdb_beta = "human_v2.0_CD48",
 #'     gliph_version = 1,
 #'     sim_depth = 100,
 #'     n_cores = 1)
@@ -101,7 +102,7 @@
 #' @export
 clusterScoring <- function(cluster_list,
                             cdr3_sequences,
-                            refdb_beta = "gliph_reference",
+                            refdb_beta = "human_v2.0_CD48",
                             v_usage_freq = NULL,
                             cdr3_length_freq = NULL,
                             ref_cluster_size = "original",
@@ -122,14 +123,14 @@ clusterScoring <- function(cluster_list,
   cdr3_sequences[] <- lapply(cdr3_sequences, as.character)
 
   ### refdb_beta
-  # if(!(refdb_beta %in% c("gliph_reference", "human_v1.0_CD4", "human_v1.0_CD8", "human_v1.0_CD48", "human_v2.0_CD4",
-  #                        "human_v2.0_CD8", "human_v2.0_CD48", "mouse_v1.0_CD4", "mouse_v1.0_CD8", "mouse_v1.0_CD48")) &&
-  #    !is.data.frame(refdb_beta)){
   if(!is.data.frame(refdb_beta)){
+    valid_names <- .valid_reference_names()
     if(length(refdb_beta) != 1 || !is.character(refdb_beta)){
-      stop("refdb_beta has to be a data frame (containing CDR3b sequences in the first column and optional V-gene information in the second column) or the value 'gliph_reference'")
-    } else if(!(refdb_beta %in% c("gliph_reference"))){
-      stop("refdb_beta has to be a data frame (containing CDR3b sequences in the first column and optional V-gene information in the second column) or the value 'gliph_reference'")
+      stop("refdb_beta must be a data frame or one of: ",
+           paste(sQuote(valid_names), collapse = ", "))
+    } else if(!(refdb_beta %in% valid_names)){
+      stop("refdb_beta must be a data frame or one of: ",
+           paste(sQuote(valid_names), collapse = ", "))
     }
   }
 
@@ -218,17 +219,20 @@ clusterScoring <- function(cluster_list,
   utils::data(ref_cluster_sizes, envir = environment(), package = "immGLIPH")
   ref_cluster_sizes <- ref_cluster_sizes[[ref_cluster_size]]
 
-  # maybe changed in future
   reference_list <- NULL
-  refdb_name <- "gliph_reference"
-  utils::data("reference_list",envir = environment(), package = "immGLIPH")
-  vgene_ref_frequencies <- reference_list[[refdb_name]][[2]]$freq
-  cdr3_length_ref_frequencies <- reference_list[[refdb_name]][[3]]$freq
+  utils::data("reference_list", envir = environment(), package = "immGLIPH")
 
-  if(!identical(refdb_beta, "gliph_reference")){
+  if(is.character(refdb_beta) && refdb_beta %in% names(reference_list)){
+    refdb_name <- refdb_beta
+    vgene_ref_frequencies <- reference_list[[refdb_name]]$vgene_frequencies$freq
+    cdr3_length_ref_frequencies <- reference_list[[refdb_name]]$cdr3_length_frequencies$freq
+  } else {
+    # User-provided data frame: compute frequencies from the data
     if("TRBV" %in% colnames(refdb_beta)){
       vgene_ref_frequencies <- as.data.frame(table(refdb_beta$TRBV))
       vgene_ref_frequencies <- vgene_ref_frequencies$Freq/sum(vgene_ref_frequencies$Freq)
+    } else {
+      vgene_ref_frequencies <- reference_list[["gliph_reference"]]$vgene_frequencies$freq
     }
     cdr3_length_ref_frequencies <- as.data.frame(table(nchar(refdb_beta$CDR3b)))
     cdr3_length_ref_frequencies <- cdr3_length_ref_frequencies$Freq/sum(cdr3_length_ref_frequencies$Freq)
