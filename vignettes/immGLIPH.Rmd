@@ -87,8 +87,13 @@ directly accept:
 
 ## Loading the Example Data
 
-immGLIPH includes a built-in dataset of ~2,000 unique TCRs of known
-specificity from Glanville et al. (2017):
+immGLIPH includes built-in example data derived from the scRepertoire
+example dataset (Yost et al. 2019):
+
+- **`gliph_input_data`**: A data frame of 365 TRB CDR3 sequences with
+  V-gene and patient annotations.
+- **`gliph_sce`**: A SingleCellExperiment object with TCR clonotype
+  information in `colData`, demonstrating the single-cell workflow.
 
 ```{r}
 data("gliph_input_data")
@@ -173,12 +178,20 @@ The `method` parameter configures a coordinated set of algorithm choices:
 
 ## Running GLIPH2 (Default)
 
+By default `runGLIPH()` downloads a reference repertoire via BiocFileCache.
+For this vignette we supply a custom reference data frame directly using
+`refdb_beta` to avoid network access:
+
 ```{r}
 data("gliph_input_data")
+
+# Use the input data itself as a small reference for demonstration
+ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 
 res_gliph2 <- runGLIPH(
   cdr3_sequences = gliph_input_data[seq_len(200), ],
   method         = "gliph2",
+  refdb_beta     = ref_df,
   sim_depth      = 100,
   n_cores        = 1
 )
@@ -190,6 +203,7 @@ res_gliph2 <- runGLIPH(
 res_gliph1 <- runGLIPH(
   cdr3_sequences = gliph_input_data[seq_len(200), ],
   method         = "gliph1",
+  refdb_beta     = ref_df,
   sim_depth      = 100,
   n_cores        = 1
 )
@@ -221,8 +235,10 @@ TCRs of a convergence group:
 # Number of convergence groups
 length(res_gliph2$cluster_list)
 
-# Members of the first cluster
-head(res_gliph2$cluster_list[[1]])
+# Members of the first cluster (if any found)
+if (length(res_gliph2$cluster_list) > 0) {
+  head(res_gliph2$cluster_list[[1]])
+}
 ```
 
 ### Motif Enrichment
@@ -231,7 +247,9 @@ The `motif_enrichment` element contains the locally enriched motifs:
 
 ```{r}
 # Significantly enriched motifs
-head(res_gliph2$motif_enrichment$selected_motifs)
+if (!is.null(res_gliph2$motif_enrichment$selected_motifs)) {
+  head(res_gliph2$motif_enrichment$selected_motifs)
+}
 ```
 
 ### Network Edges
@@ -240,7 +258,9 @@ The `connections` data frame contains the edge list representing the TCR
 similarity network:
 
 ```{r}
-head(res_gliph2$connections)
+if (!is.null(res_gliph2$connections)) {
+  head(res_gliph2$connections)
+}
 ```
 
 # Customizing the Analysis

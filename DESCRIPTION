@@ -25,7 +25,6 @@ Imports:
     stringr,
     stats,
     utils,
-    methods,
     graphics,
     grDevices,
     viridis,

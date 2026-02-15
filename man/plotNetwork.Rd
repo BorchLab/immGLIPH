@@ -76,12 +76,15 @@ is fully interactive: scroll to zoom, hover over a node for details, and
 click a node to highlight its direct neighbors.
 }
 \examples{
+\dontrun{
 utils::data("gliph_input_data")
-res <- turbo_gliph(cdr3_sequences = gliph_input_data[seq_len(200),],
-                   sim_depth = 100,
-                   n_cores = 1)
+res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
+                method = "gliph1",
+                sim_depth = 100,
+                n_cores = 1)
 
 plotNetwork(clustering_output = res,
             n_cores = 1)
+}
 
 }

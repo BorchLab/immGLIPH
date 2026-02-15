@@ -27,10 +27,10 @@ string) and \code{V1} (the observed frequency).
 \description{
 Searches a character vector of amino acid sequences for k-mer motifs and
 returns their frequencies. Both continuous and discontinuous (gapped) motifs
-are supported. When \pkg{immApex} is installed, the C++-accelerated
-\code{\link[immApex]{calculateMotif}} backend is used automatically for
-improved performance; otherwise the function falls back to a pure-R
-implementation based on \code{\link[stringdist]{qgrams}}.
+are supported. When \pkg{immApex} (>= 2.0.0) is installed, the
+C++-accelerated \code{immApex::calculateMotif()} backend is used
+automatically for improved performance; otherwise the function falls back
+to a pure-R implementation based on \code{\link[stringdist]{qgrams}}.
 }
 \examples{
 utils::data("gliph_input_data")

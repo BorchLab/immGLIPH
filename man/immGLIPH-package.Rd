@@ -29,7 +29,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Nick Borcherding \email{ncborch@gmail.com} (\href{https://orcid.org/0000-0003-3767-1144}{ORCID})
+\strong{Maintainer}: Nick Borcherding \email{ncborch@gmail.com}
 
 }
 \keyword{internal}

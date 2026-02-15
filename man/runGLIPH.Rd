@@ -265,6 +265,9 @@ convergence group scoring.
 \item{verbose}{Logical. If \code{TRUE}, print progress messages to the
 console.
 \strong{Default:} \code{TRUE}}
+
+\item{...}{Arguments passed to \code{runGLIPH()} by the deprecated
+wrapper functions.}
 }
 \value{
 A \code{list} with the following elements:
@@ -303,6 +306,7 @@ deprecated aliases. Use \code{runGLIPH()} instead.
 }
 
 \examples{
+\dontrun{
 utils::data("gliph_input_data")
 res <- runGLIPH(
   cdr3_sequences = gliph_input_data[seq_len(200), ],
@@ -310,6 +314,7 @@ res <- runGLIPH(
   sim_depth = 50,
   n_cores = 1
 )
+}
 
 }
 \references{

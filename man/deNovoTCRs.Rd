@@ -103,16 +103,20 @@ from the convergence group, and optionally normalized against a reference
 database. The top-scoring sequences are returned.
 }
 \examples{
+\dontrun{
 utils::data("gliph_input_data")
-res <- turbo_gliph(cdr3_sequences = gliph_input_data[seq_len(200),],
-sim_depth = 100,
-n_cores = 1)
+res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
+  method = "gliph1",
+  sim_depth = 100,
+  n_cores = 1)
 
-new_seqs <- deNovoTCRs(convergence_group_tag = res$cluster_properties$tag[1],
-clustering_output = res,
-sims = 10000,
-make_figure = TRUE,
-n_cores = 1)
+new_seqs <- deNovoTCRs(
+  convergence_group_tag = res$cluster_properties$tag[1],
+  clustering_output = res,
+  sims = 10000,
+  make_figure = TRUE,
+  n_cores = 1)
+}
 
 }
 \references{
