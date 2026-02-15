@@ -53,7 +53,7 @@ test_that("findMotifs returns empty data frame for empty input", {
 
 test_that(".find_motifs_stringdist returns data frame with motif and V1", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
-  result <- .find_motifs_stringdist(seqs, q = 2)
+  result <- immGLIPH:::.find_motifs_stringdist(seqs, q = 2)
   expect_s3_class(result, "data.frame")
   expect_true("motif" %in% colnames(result))
   expect_true("V1" %in% colnames(result))
@@ -61,7 +61,7 @@ test_that(".find_motifs_stringdist returns data frame with motif and V1", {
 
 test_that(".find_motifs_stringdist handles discontinuous motifs", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
-  result <- .find_motifs_stringdist(seqs, q = 2, discontinuous = TRUE)
+  result <- immGLIPH:::.find_motifs_stringdist(seqs, q = 2, discontinuous = TRUE)
   disc <- result[grep("\\.", result$motif), ]
   expect_true(nrow(disc) > 0)
 })
@@ -70,12 +70,14 @@ test_that(".find_motifs_stringdist handles discontinuous motifs", {
 
 test_that("immApex backend produces same motifs as stringdist backend", {
   skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
 
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF",
             "CASSLAPGATNEKLFF", "CASSLDRGEVFF")
 
   # Force stringdist path
-  result_sd <- .find_motifs_stringdist(seqs, q = 2:3)
+  result_sd <- immGLIPH:::.find_motifs_stringdist(seqs, q = 2:3)
   # immApex path (findMotifs uses immApex when available)
   result_apex <- findMotifs(seqs, q = 2:3)
 
@@ -92,10 +94,12 @@ test_that("immApex backend produces same motifs as stringdist backend", {
 
 test_that("immApex backend handles kmer_mindepth correctly", {
   skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
 
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
 
-  result_sd   <- .find_motifs_stringdist(seqs, q = 2, kmer_mindepth = 3)
+  result_sd   <- immGLIPH:::.find_motifs_stringdist(seqs, q = 2, kmer_mindepth = 3)
   result_apex <- findMotifs(seqs, q = 2, kmer_mindepth = 3)
 
   # Both should only return motifs with V1 >= 3
@@ -109,10 +113,12 @@ test_that("immApex backend handles kmer_mindepth correctly", {
 
 test_that("immApex backend handles discontinuous motifs correctly", {
   skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
 
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
 
-  result_sd   <- .find_motifs_stringdist(seqs, q = 2, discontinuous = TRUE)
+  result_sd   <- immGLIPH:::.find_motifs_stringdist(seqs, q = 2, discontinuous = TRUE)
   result_apex <- findMotifs(seqs, q = 2, discontinuous = TRUE)
 
   # Both should contain discontinuous motifs (with dots)

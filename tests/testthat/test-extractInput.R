@@ -80,8 +80,17 @@ test_that(".parse_sequences detects optional columns", {
   expect_true(result$count.info)
 })
 
-test_that(".parse_sequences errors on missing CDR3b column", {
-  df <- data.frame(x = c("CASSLAPGATNEKLFF"), stringsAsFactors = FALSE)
-  colnames(df) <- "not_cdr3"
-  expect_error(immGLIPH:::.parse_sequences(df), "CDR3b")
+test_that(".parse_sequences errors on missing CDR3b column for multi-column data frame", {
+  df <- data.frame(
+    not_cdr3 = c("CASSLAPGATNEKLFF"),
+    other    = c("something"),
+    stringsAsFactors = FALSE
+  )
+  expect_error(immGLIPH:::.parse_sequences(df, verbose = FALSE), "CDR3b")
+})
+
+test_that(".parse_sequences uses first column for single-column data frame", {
+  df <- data.frame(not_cdr3 = c("CASSLAPGATNEKLFF"), stringsAsFactors = FALSE)
+  result <- immGLIPH:::.parse_sequences(df, verbose = FALSE)
+  expect_equal(nrow(result$sequences), 1)
 })

@@ -12,7 +12,7 @@ test_that(".global_cutoff_stringdist returns correct structure", {
   )
 
   # Use a high cutoff so at least some edges are found
-  result <- .global_cutoff_stringdist(
+  result <- immGLIPH:::.global_cutoff_stringdist(
     seqs         = seqs,
     motif_region = motif_region,
     sequences    = sequences,
@@ -41,7 +41,7 @@ test_that(".global_cutoff_stringdist returns empty for zero cutoff on different 
     stringsAsFactors = FALSE
   )
 
-  result <- .global_cutoff_stringdist(
+  result <- immGLIPH:::.global_cutoff_stringdist(
     seqs         = seqs,
     motif_region = motif_region,
     sequences    = sequences,
@@ -66,7 +66,7 @@ test_that(".global_cutoff dispatches correctly", {
   )
 
   # This should work regardless of whether immApex is installed
-  result <- .global_cutoff(
+  result <- immGLIPH:::.global_cutoff(
     seqs         = seqs,
     motif_region = motif_region,
     sequences    = sequences,
@@ -84,6 +84,8 @@ test_that(".global_cutoff dispatches correctly", {
 
 test_that("immApex buildNetwork backend matches stringdist backend", {
   skip_if_not_installed("immApex")
+  skip_if(!exists("buildNetwork", asNamespace("immApex")),
+          "immApex::buildNetwork not available")
 
   seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRQTNEKLFF",
             "CASSLDRGEVFF", "CASSLDRGQVFF")
@@ -94,7 +96,7 @@ test_that("immApex buildNetwork backend matches stringdist backend", {
     stringsAsFactors = FALSE
   )
 
-  result_sd <- .global_cutoff_stringdist(
+  result_sd <- immGLIPH:::.global_cutoff_stringdist(
     seqs         = seqs,
     motif_region = motif_region,
     sequences    = sequences,
@@ -104,7 +106,7 @@ test_that("immApex buildNetwork backend matches stringdist backend", {
     verbose      = FALSE
   )
 
-  result_apex <- .global_cutoff_immapex(
+  result_apex <- immGLIPH:::.global_cutoff_immapex(
     seqs         = seqs,
     motif_region = motif_region,
     sequences    = sequences,
