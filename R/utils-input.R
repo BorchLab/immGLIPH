@@ -104,8 +104,7 @@
 
 #' Parse and filter sequences data frame
 #'
-#' Consolidates the input preparation logic from turbo_gliph, gliph2,
-#' and gliph_combined into a single function.
+#' Consolidates the input preparation logic into a single function.
 #'
 #' @param cdr3_sequences Data frame or vector of sequences
 #' @param accept_CF Accept only sequences starting with C and ending with F

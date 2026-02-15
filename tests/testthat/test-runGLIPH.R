@@ -101,41 +101,6 @@ test_that("runGLIPH rejects empty input", {
   )
 })
 
-# ---- Deprecated aliases ------------------------------------------------------
-
-test_that("deprecated aliases emit warnings", {
-  expect_warning(
-    tryCatch(
-      turbo_gliph(character(0)),
-      error = function(e) NULL
-    ),
-    "deprecated"
-  )
-  expect_warning(
-    tryCatch(
-      gliph2(character(0)),
-      error = function(e) NULL
-    ),
-    "deprecated"
-  )
-})
-
-test_that("deprecated functions produce warnings via data frame input", {
-  # turbo_gliph should warn about deprecation
-  tryCatch(
-    expect_warning(turbo_gliph(cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF")),
-                   "deprecated"),
-    error = function(e) NULL  # Ignore downstream errors
-  )
-
-  # gliph2 should warn about deprecation
-  tryCatch(
-    expect_warning(gliph2(cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF")),
-                   "deprecated"),
-    error = function(e) NULL
-  )
-})
-
 # ---- End-to-end integration tests -------------------------------------------
 
 test_that("runGLIPH method presets set correct sub-methods", {

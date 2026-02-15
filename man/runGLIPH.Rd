@@ -2,9 +2,6 @@
 % Please edit documentation in R/runGLIPH.R
 \name{runGLIPH}
 \alias{runGLIPH}
-\alias{turbo_gliph}
-\alias{gliph2}
-\alias{gliph_combined}
 \title{Run the GLIPH or GLIPH2 TCR clustering algorithm}
 \usage{
 runGLIPH(
@@ -47,12 +44,6 @@ runGLIPH(
   scoring_sim_depth = 1000,
   verbose = TRUE
 )
-
-turbo_gliph(cdr3_sequences, ...)
-
-gliph2(cdr3_sequences, ...)
-
-gliph_combined(cdr3_sequences, ...)
 }
 \arguments{
 \item{cdr3_sequences}{Input data containing CDR3b amino acid sequences.
@@ -265,9 +256,6 @@ convergence group scoring.
 \item{verbose}{Logical. If \code{TRUE}, print progress messages to the
 console.
 \strong{Default:} \code{TRUE}}
-
-\item{...}{Arguments passed to \code{runGLIPH()} by the deprecated
-wrapper functions.}
 }
 \value{
 A \code{list} with the following elements:
@@ -299,12 +287,6 @@ receptors by antigen specificity. The function identifies locally and
 globally similar CDR3b sequences, clusters them into convergence groups,
 and scores each group for biological relevance.
 }
-\section{Deprecated Functions}{
-
-\code{turbo_gliph}, \code{gliph2}, and \code{gliph_combined} are
-deprecated aliases. Use \code{runGLIPH()} instead.
-}
-
 \examples{
 \dontrun{
 utils::data("gliph_input_data")

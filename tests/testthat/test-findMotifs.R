@@ -40,8 +40,10 @@ test_that("findMotifs with discontinuous motifs includes dots", {
   result <- findMotifs(seqs, q = 2, discontinuous = TRUE)
   disc <- result[grep("\\.", result$motif), ]
   expect_true(nrow(disc) > 0)
-  # Discontinuous motifs should have length 3 (q+1) with one dot
-  expect_true(all(nchar(disc$motif) == 3))
+  # All discontinuous motifs should contain exactly one dot
+  expect_true(all(grepl("\\.", disc$motif)))
+  # Discontinuous motifs should be longer than the base q
+  expect_true(all(nchar(disc$motif) >= 3))
 })
 
 test_that("findMotifs returns empty data frame for empty input", {

@@ -30,6 +30,11 @@ findMotifs <- function(seqs, q = 2:4, kmer_mindepth = NULL,
                        discontinuous = FALSE) {
   seqs <- as.character(seqs)
 
+  ## ---- Early return for empty input -----------------------------------------
+  if (length(seqs) == 0L) {
+    return(data.frame(motif = character(0), V1 = integer(0)))
+  }
+
   ## ---- immApex C++ fast path ------------------------------------------------
   if (requireNamespace("immApex", quietly = TRUE) &&
       exists("calculateMotif", asNamespace("immApex"))) {

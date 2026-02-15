@@ -27,8 +27,8 @@ output files and where results will be saved. If the value is \code{""},
 results are not saved to disk and the clustering output must be provided
 via \code{clustering_output}. \strong{Default:} \code{""}}
 
-\item{clustering_output}{List. The output list from \code{turbo_gliph} or
-\code{gliph2}. Required when \code{result_folder} is \code{""}.
+\item{clustering_output}{List. The output list from \code{\link{runGLIPH}}.
+Required when \code{result_folder} is \code{""}.
 \strong{Default:} \code{NULL}}
 
 \item{refdb_beta}{Character or data.frame. Specifies the reference

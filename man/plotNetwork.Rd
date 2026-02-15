@@ -19,8 +19,7 @@ plotNetwork(
 )
 }
 \arguments{
-\item{clustering_output}{Output list returned by \code{\link{turbo_gliph}}
-or \code{\link{gliph2}}. Ignored when \code{result_folder} is provided.
+\item{clustering_output}{Output list returned by \code{\link{runGLIPH}}.
 \strong{Default:} \code{NULL}}
 
 \item{result_folder}{Path to the folder containing saved GLIPH output
@@ -69,11 +68,11 @@ A \code{visNetwork} object containing the interactive network graph.
 }
 \description{
 Uses the visNetwork package to build an interactive network graph from the
-clustering results produced by \code{\link{turbo_gliph}} or
-\code{\link{gliph2}}. Nodes represent individual CDR3b sequences and edges
-encode local or global sequence similarities. The resulting visualization
-is fully interactive: scroll to zoom, hover over a node for details, and
-click a node to highlight its direct neighbors.
+clustering results produced by \code{\link{runGLIPH}}. Nodes represent
+individual CDR3b sequences and edges encode local or global sequence
+similarities. The resulting visualization is fully interactive: scroll to
+zoom, hover over a node for details, and click a node to highlight its
+direct neighbors.
 }
 \examples{
 \dontrun{

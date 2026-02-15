@@ -29,11 +29,17 @@ test_that("clusterScoring accepts character vector for cdr3_sequences", {
   )
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
 
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
   # This should not error on the cdr3_sequences validation
-  # (may error later on reference loading if BiocFileCache is not available)
+  # (may error later if immApex features are unavailable)
   tryCatch(
     clusterScoring(cluster_list = cl, cdr3_sequences = seqs,
-                   sim_depth = 10, n_cores = 1),
+                   refdb_beta = ref_df, sim_depth = 10, n_cores = 1),
     error = function(e) {
       # Accept errors that are NOT about cdr3_sequences format
       expect_false(grepl("data.frame", e$message))

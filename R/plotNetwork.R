@@ -1,14 +1,13 @@
 #' Visualize TCR convergence group network
 #'
 #' Uses the visNetwork package to build an interactive network graph from the
-#' clustering results produced by \code{\link{turbo_gliph}} or
-#' \code{\link{gliph2}}. Nodes represent individual CDR3b sequences and edges
-#' encode local or global sequence similarities. The resulting visualization
-#' is fully interactive: scroll to zoom, hover over a node for details, and
-#' click a node to highlight its direct neighbors.
+#' clustering results produced by \code{\link{runGLIPH}}. Nodes represent 
+#' individual CDR3b sequences and edges encode local or global sequence 
+#' similarities. The resulting visualization is fully interactive: scroll to 
+#' zoom, hover over a node for details, and click a node to highlight its 
+#' direct neighbors.
 #'
-#' @param clustering_output Output list returned by \code{\link{turbo_gliph}}
-#' or \code{\link{gliph2}}. Ignored when \code{result_folder} is provided.
+#' @param clustering_output Output list returned by \code{\link{runGLIPH}}.
 #' **Default:** `NULL`
 #' @param result_folder Path to the folder containing saved GLIPH output
 #' files. When a non-empty path is supplied the results are loaded from disk

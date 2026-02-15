@@ -30,7 +30,6 @@
 A list with sequences data frame and info flags
 }
 \description{
-Consolidates the input preparation logic from turbo_gliph, gliph2,
-and gliph_combined into a single function.
+Consolidates the input preparation logic into a single function.
 }
 \keyword{internal}

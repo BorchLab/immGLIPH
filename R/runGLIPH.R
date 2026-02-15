@@ -907,36 +907,3 @@ runGLIPH <- function(cdr3_sequences,
 
   output
 }
-
-
-#' @rdname runGLIPH
-#' @param ... Arguments passed to \code{runGLIPH()} by the deprecated
-#'   wrapper functions.
-#' @section Deprecated Functions:
-#' \code{turbo_gliph}, \code{gliph2}, and \code{gliph_combined} are
-#' deprecated aliases. Use \code{runGLIPH()} instead.
-#' @export
-turbo_gliph <- function(cdr3_sequences, ...) {
-  .Deprecated("runGLIPH", package = "immGLIPH",
-              msg = paste("turbo_gliph() is deprecated.",
-                          "Use runGLIPH(..., method = 'gliph1') instead."))
-  runGLIPH(cdr3_sequences, method = "gliph1", ...)
-}
-
-#' @rdname runGLIPH
-#' @export
-gliph2 <- function(cdr3_sequences, ...) {
-  .Deprecated("runGLIPH", package = "immGLIPH",
-              msg = paste("gliph2() is deprecated.",
-                          "Use runGLIPH(..., method = 'gliph2') instead."))
-  runGLIPH(cdr3_sequences, method = "gliph2", ...)
-}
-
-#' @rdname runGLIPH
-#' @export
-gliph_combined <- function(cdr3_sequences, ...) {
-  .Deprecated("runGLIPH", package = "immGLIPH",
-              msg = paste("gliph_combined() is deprecated.",
-                          "Use runGLIPH(..., method = 'custom') instead."))
-  runGLIPH(cdr3_sequences, method = "custom", ...)
-}

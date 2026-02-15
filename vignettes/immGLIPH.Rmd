@@ -148,9 +148,6 @@ results <- runGLIPH(seurat_obj, method = "gliph2", chains = "TRB")
 
 # The `runGLIPH()` Function
 
-`runGLIPH()` is the unified entry point that replaces the legacy
-`turbo_gliph()`, `gliph2()`, and `gliph_combined()` functions.
-
 ## Key Arguments
 
 | Argument | Default | Description |
