@@ -57,6 +57,16 @@ immGLIPH can be installed from GitHub:
 devtools::install_github("BorchLab/immGLIPH")
 ```
 
+The reference repertoire data (~19 MB) is downloaded automatically the first
+time you run `runGLIPH()` and cached locally via
+[BiocFileCache](https://bioconductor.org/packages/BiocFileCache/). You can
+pre-download the data with:
+
+```{r eval=FALSE}
+BiocManager::install("BiocFileCache")
+ref <- getGLIPHreference()
+```
+
 ```{r}
 library(immGLIPH)
 ```
@@ -144,7 +154,7 @@ results <- runGLIPH(seurat_obj, method = "gliph2", chains = "TRB")
 | `method` | `"gliph2"` | Algorithm preset: `"gliph1"`, `"gliph2"`, or `"custom"` |
 | `sim_depth` | 1000 | Simulation depth (higher = more reproducible, slower) |
 | `n_cores` | 1 | Number of parallel cores |
-| `refdb_beta` | `"gliph_reference"` | Reference database (built-in or custom data frame) |
+| `refdb_beta` | `"human_v2.0_CD48"` | Reference database (built-in name or custom data frame) |
 | `local_similarities` | `TRUE` | Search for local (motif-based) similarities |
 | `global_similarities` | `TRUE` | Search for global (structural) similarities |
 | `structboundaries` | `TRUE` | Trim structural boundaries before comparison |
@@ -274,10 +284,42 @@ res_strict <- runGLIPH(
 )
 ```
 
+## Choosing a Reference Database
+
+immGLIPH ships with reference repertoires for human and mouse from
+the original GLIPH publications. Each is available as CD4, CD8, or combined
+(CD48) subsets:
+
+| Name | Species | Version | Subset | Source |
+|:-----|:--------|:--------|:-------|:-------|
+| `"human_v1.0_CD4"` | Human | v1.0 | CD4 | Glanville et al. (2017) |
+| `"human_v1.0_CD8"` | Human | v1.0 | CD8 | Glanville et al. (2017) |
+| `"human_v1.0_CD48"` | Human | v1.0 | CD4+CD8 | Glanville et al. (2017) |
+| `"human_v2.0_CD4"` | Human | v2.0 | CD4 | Huang et al. (2020) |
+| `"human_v2.0_CD8"` | Human | v2.0 | CD8 | Huang et al. (2020) |
+| `"human_v2.0_CD48"` | Human | v2.0 | CD4+CD8 | Huang et al. (2020) |
+| `"mouse_v1.0_CD4"` | Mouse | v1.0 | CD4 | Huang et al. (2020) |
+| `"mouse_v1.0_CD8"` | Mouse | v1.0 | CD8 | Huang et al. (2020) |
+| `"mouse_v1.0_CD48"` | Mouse | v1.0 | CD4+CD8 | Huang et al. (2020) |
+| `"gliph_reference"` | Human | v1.0 | CD4+CD8 | Legacy alias for `human_v1.0_CD48` |
+
+Each reference includes pre-computed V-gene usage and CDR3 length frequency
+distributions, which are automatically used for cluster scoring.
+
+```{r eval=FALSE}
+# Use the GLIPH2 mouse reference
+res_mouse <- runGLIPH(
+  cdr3_sequences = mouse_tcr_data,
+  refdb_beta     = "mouse_v1.0_CD48",
+  method         = "gliph2",
+  sim_depth      = 100,
+  n_cores        = 1
+)
+```
+
 ## Using a Custom Reference Database
 
-By default, immGLIPH uses the built-in reference of 162,165 naive CDR3$\beta$
-sequences. You can supply your own:
+You can also supply your own reference as a data frame:
 
 ```{r eval=FALSE}
 custom_ref <- data.frame(
@@ -294,9 +336,9 @@ res <- runGLIPH(
 )
 ```
 
-# Motif Discovery with `find_motifs()`
+# Motif Discovery with `findMotifs()`
 
-The `find_motifs()` function searches for continuous and discontinuous k-mer
+The `findMotifs()` function searches for continuous and discontinuous k-mer
 motifs in a set of CDR3 sequences. It is used internally by `runGLIPH()` but
 can also be called independently.
 
@@ -316,14 +358,14 @@ data("gliph_input_data")
 sample_seqs <- as.character(gliph_input_data$CDR3b[seq_len(100)])
 
 # Find all 3-mers appearing at least 5 times
-motifs <- find_motifs(seqs = sample_seqs, q = 3, kmer_mindepth = 5)
+motifs <- findMotifs(seqs = sample_seqs, q = 3, kmer_mindepth = 5)
 head(motifs[order(motifs$V1, decreasing = TRUE), ])
 ```
 
 Including discontinuous motifs (e.g., `C.S` where `.` is any amino acid):
 
 ```{r}
-disc_motifs <- find_motifs(
+disc_motifs <- findMotifs(
   seqs         = sample_seqs,
   q            = 2,
   kmer_mindepth = 5,
@@ -334,9 +376,9 @@ disc_only <- disc_motifs[grep("\\.", disc_motifs$motif), ]
 head(disc_only[order(disc_only$V1, decreasing = TRUE), ])
 ```
 
-# Cluster Scoring with `cluster_scoring()`
+# Cluster Scoring with `clusterScoring()`
 
-The `cluster_scoring()` function evaluates convergence groups using up to five
+The `clusterScoring()` function evaluates convergence groups using up to five
 metrics. This is called automatically by `runGLIPH()`, but can be re-run with
 different parameters on existing results.
 
@@ -346,7 +388,7 @@ different parameters on existing results.
 |:---------|:--------|:------------|
 | `cluster_list` | -- | Named list of cluster data frames (from `runGLIPH()$cluster_list`) |
 | `cdr3_sequences` | -- | Original input data frame |
-| `refdb_beta` | `"gliph_reference"` | Reference database |
+| `refdb_beta` | `"human_v2.0_CD48"` | Reference database |
 | `gliph_version` | 1 | Scoring formula: 1 (GLIPH) or 2 (GLIPH2) |
 | `sim_depth` | 1000 | Resampling depth for score estimation |
 
@@ -369,7 +411,7 @@ data):
 
 ```{r eval=FALSE}
 # Re-score with GLIPH2 formula and higher simulation depth
-rescored <- cluster_scoring(
+rescored <- clusterScoring(
   cluster_list   = res_gliph1$cluster_list,
   cdr3_sequences = gliph_input_data[seq_len(200), ],
   refdb_beta     = "gliph_reference",
@@ -380,9 +422,9 @@ rescored <- cluster_scoring(
 head(rescored)
 ```
 
-# De Novo TCR Generation with `de_novo_TCRs()`
+# De Novo TCR Generation with `deNovoTCRs()`
 
-The `de_novo_TCRs()` function generates artificial CDR3$\beta$ sequences that
+The `deNovoTCRs()` function generates artificial CDR3$\beta$ sequences that
 resemble the positional amino acid composition of a given convergence group.
 This can be used to predict novel TCR sequences with similar binding
 characteristics.
@@ -403,7 +445,7 @@ characteristics.
 
 ```{r eval=FALSE}
 # Generate de novo TCRs for the top convergence group
-de_novo <- de_novo_TCRs(
+de_novo <- deNovoTCRs(
   convergence_group_tag = res_gliph1$cluster_properties$tag[1],
   clustering_output     = res_gliph1,
   sims                  = 10000,
@@ -419,9 +461,9 @@ head(de_novo$de_novo_sequences)
 head(de_novo$PWM_Scoring)
 ```
 
-# Network Visualization with `plot_network()`
+# Network Visualization with `plotNetwork()`
 
-The `plot_network()` function creates an interactive network visualization of
+The `plotNetwork()` function creates an interactive network visualization of
 the convergence groups using the visNetwork package.
 
 ## Key Arguments
@@ -439,7 +481,7 @@ the convergence groups using the visNetwork package.
 ## Example
 
 ```{r eval=FALSE}
-plot_network(
+plotNetwork(
   clustering_output = res_gliph2,
   color_info        = "total.score",
   cluster_min_size  = 3,
@@ -450,7 +492,7 @@ plot_network(
 You can also color nodes by donor/patient:
 
 ```{r eval=FALSE}
-plot_network(
+plotNetwork(
   clustering_output = res_gliph2,
   color_info        = "patient",
   cluster_min_size  = 3,
@@ -496,7 +538,7 @@ When [immApex](https://github.com/BorchLab/immApex) is installed, immGLIPH
 automatically uses its C++-accelerated backends for two computationally
 intensive steps:
 
-1. **Motif enumeration** (`find_motifs()`): Uses `immApex::calculateMotif()`
+1. **Motif enumeration** (`findMotifs()`): Uses `immApex::calculateMotif()`
    with OpenMP multithreading instead of the pure-R `stringdist::qgrams()`
    approach.
 
@@ -534,8 +576,8 @@ devtools::install_github("BorchLab/immApex")
    C++-accelerated motif enumeration and network construction (see
    Performance section above).
 
-7. **Custom references**: For mouse data or specialized repertoires, provide a
-   custom reference database via `refdb_beta`.
+7. **Choose the right reference**: For mouse data, use `refdb_beta = "mouse_v1.0_CD48"`.
+   For specialized repertoires, provide a custom data frame via `refdb_beta`.
 
 # Session Info
 
