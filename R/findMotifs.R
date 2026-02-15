@@ -31,7 +31,8 @@ findMotifs <- function(seqs, q = 2:4, kmer_mindepth = NULL,
   seqs <- as.character(seqs)
 
   ## ---- immApex C++ fast path ------------------------------------------------
-  if (requireNamespace("immApex", quietly = TRUE)) {
+  if (requireNamespace("immApex", quietly = TRUE) &&
+      exists("calculateMotif", asNamespace("immApex"))) {
     result <- immApex::calculateMotif(
       input.sequences      = seqs,
       motif.lengths        = q,

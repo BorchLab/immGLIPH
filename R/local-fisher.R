@@ -59,7 +59,8 @@
 
   ## Step 1 & 2: Find motifs in reference and sample sets
   ## -----------------------------------------------------------
-  if (requireNamespace("immApex", quietly = TRUE)) {
+  if (requireNamespace("immApex", quietly = TRUE) &&
+      exists("calculateMotif", asNamespace("immApex"))) {
     ## ---- immApex C++ fast path: single-call with multithreading ----
     if (verbose) message("Finding motifs in reference sequences (immApex)...")
     ref_motifs_df <- immApex::calculateMotif(

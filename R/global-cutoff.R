@@ -38,7 +38,8 @@
   if (verbose) message("Searching for global similarities (cutoff method).")
 
   ## ---- immApex C++ fast path ------------------------------------------------
-  if (requireNamespace("immApex", quietly = TRUE)) {
+  if (requireNamespace("immApex", quietly = TRUE) &&
+      exists("buildNetwork", asNamespace("immApex"))) {
     return(.global_cutoff_immapex(seqs, motif_region, sequences,
                                   gccutoff, global_vgene, verbose))
   }
