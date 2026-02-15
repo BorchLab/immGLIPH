@@ -22,13 +22,13 @@
 #'       frequency.}
 #'   }
 #' @param method Character. Algorithm preset to use.
-#'   \itemize{
-#'     \item{\code{"gliph2"}}{ Fisher-based local and global similarity,
+#'   \describe{
+#'     \item{\code{"gliph2"}}{Fisher-based local and global similarity,
 #'       GLIPH2-style isolated clustering and scoring.}
-#'     \item{\code{"gliph1"}}{ Repeated random sampling for local similarity,
+#'     \item{\code{"gliph1"}}{Repeated random sampling for local similarity,
 #'       Hamming distance cutoff for global similarity, GLIPH1-style
 #'       connected-component clustering.}
-#'     \item{\code{"custom"}}{ All parameters can be set independently.}
+#'     \item{\code{"custom"}}{All parameters can be set independently.}
 #'   }
 #'   **Default:** \code{"gliph2"}
 #' @param chains Character. Chain type for extraction from \code{Seurat} or
@@ -55,9 +55,9 @@
 #'   frequencies for scoring. If \code{NULL}, built-in defaults are used.
 #'   **Default:** \code{NULL}
 #' @param ref_cluster_size Character. Reference cluster size strategy.
-#'   \itemize{
-#'     \item{\code{"original"}}{ Use the original sample size.}
-#'     \item{\code{"simulated"}}{ Use simulated cluster sizes.}
+#'   \describe{
+#'     \item{\code{"original"}}{Use the original sample size.}
+#'     \item{\code{"simulated"}}{Use simulated cluster sizes.}
 #'   }
 #'   **Default:** \code{"original"}
 #' @param sim_depth Integer. Simulation depth for repeated random sampling
@@ -96,30 +96,30 @@
 #'   **Default:** \code{TRUE}
 #' @param local_method Character or \code{NULL}. Method for local similarity
 #'   detection. If \code{NULL}, set by the \code{method} preset.
-#'   \itemize{
-#'     \item{\code{"fisher"}}{ Fisher exact test for motif enrichment.}
-#'     \item{\code{"rrs"}}{ Repeated random sampling.}
+#'   \describe{
+#'     \item{\code{"fisher"}}{Fisher exact test for motif enrichment.}
+#'     \item{\code{"rrs"}}{Repeated random sampling.}
 #'   }
 #'   **Default:** \code{NULL}
 #' @param global_method Character or \code{NULL}. Method for global similarity
 #'   detection. If \code{NULL}, set by the \code{method} preset.
-#'   \itemize{
-#'     \item{\code{"fisher"}}{ Fisher exact test for struct enrichment.}
-#'     \item{\code{"cutoff"}}{ Hamming distance cutoff.}
+#'   \describe{
+#'     \item{\code{"fisher"}}{Fisher exact test for struct enrichment.}
+#'     \item{\code{"cutoff"}}{Hamming distance cutoff.}
 #'   }
 #'   **Default:** \code{NULL}
 #' @param clustering_method Character or \code{NULL}. Clustering strategy.
 #'   If \code{NULL}, set by the \code{method} preset.
-#'   \itemize{
-#'     \item{\code{"GLIPH1.0"}}{ Connected-component clustering.}
-#'     \item{\code{"GLIPH2.0"}}{ Isolated clustering with merging.}
+#'   \describe{
+#'     \item{\code{"GLIPH1.0"}}{Connected-component clustering.}
+#'     \item{\code{"GLIPH2.0"}}{Isolated clustering with merging.}
 #'   }
 #'   **Default:** \code{NULL}
 #' @param scoring_method Character or \code{NULL}. Scoring strategy.
 #'   If \code{NULL}, set by the \code{method} preset.
-#'   \itemize{
-#'     \item{\code{"GLIPH1.0"}}{ GLIPH1-style scoring.}
-#'     \item{\code{"GLIPH2.0"}}{ GLIPH2-style scoring.}
+#'   \describe{
+#'     \item{\code{"GLIPH1.0"}}{GLIPH1-style scoring.}
+#'     \item{\code{"GLIPH2.0"}}{GLIPH2-style scoring.}
 #'   }
 #'   **Default:** \code{NULL}
 #' @param cluster_min_size Integer. Minimum number of unique CDR3b sequences
@@ -156,20 +156,20 @@
 #' @param public_tcrs Logical or character. Controls cross-donor edge
 #'   filtering. For \code{method = "gliph1"} or \code{"gliph2"}: if
 #'   \code{FALSE}, restrict edges to same donor. For \code{method = "custom"}:
-#'   \itemize{
-#'     \item{\code{"all"}}{ Allow cross-donor edges for all similarity types.}
-#'     \item{\code{"local"}}{ Allow cross-donor edges for local only.}
-#'     \item{\code{"global"}}{ Allow cross-donor edges for global only.}
-#'     \item{\code{"none"}}{ Restrict all edges to same donor.}
+#'   \describe{
+#'     \item{\code{"all"}}{Allow cross-donor edges for all similarity types.}
+#'     \item{\code{"local"}}{Allow cross-donor edges for local only.}
+#'     \item{\code{"global"}}{Allow cross-donor edges for global only.}
+#'     \item{\code{"none"}}{Restrict all edges to same donor.}
 #'   }
 #'   **Default:** \code{TRUE}
 #' @param vgene_match Character. V-gene matching requirement for custom
 #'   clustering.
-#'   \itemize{
-#'     \item{\code{"none"}}{ No V-gene matching required.}
-#'     \item{\code{"local"}}{ Require V-gene match for local edges.}
-#'     \item{\code{"global"}}{ Require V-gene match for global edges.}
-#'     \item{\code{"all"}}{ Require V-gene match for all edges.}
+#'   \describe{
+#'     \item{\code{"none"}}{No V-gene matching required.}
+#'     \item{\code{"local"}}{Require V-gene match for local edges.}
+#'     \item{\code{"global"}}{Require V-gene match for global edges.}
+#'     \item{\code{"all"}}{Require V-gene match for all edges.}
 #'   }
 #'   **Default:** \code{"none"}
 #' @param scoring_sim_depth Integer. Simulation depth used specifically for
@@ -490,6 +490,7 @@ runGLIPH <- function(cdr3_sequences,
 
     ## Build local clone network from selected motifs
     if (!is.null(selected_motifs) && nrow(selected_motifs) > 0) {
+      i <- NULL
       local_clone_network <- foreach::foreach(
         i = seq_len(nrow(selected_motifs)),
         .combine = rbind

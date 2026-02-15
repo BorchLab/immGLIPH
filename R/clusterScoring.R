@@ -13,19 +13,19 @@
 #' @param cdr3_sequences A \code{vector} or \code{data.frame} of CDR3
 #' sequences and optional metadata. The columns must be named as
 #' specified below in arbitrary order:
-#' \itemize{
-#'   \item{\code{"CDR3b"}:}{ CDR3 sequences of beta chains.}
-#'   \item{\code{"TRBV"}:}{ Optional. V-genes of beta chains.}
-#'   \item{\code{"patient"}:}{ Optional. Donor index for the
+#' \describe{
+#'   \item{\code{"CDR3b"}}{CDR3 sequences of beta chains.}
+#'   \item{\code{"TRBV"}}{Optional. V-genes of beta chains.}
+#'   \item{\code{"patient"}}{Optional. Donor index for the
 #'     corresponding sequence, composed of a donor identifier and an
 #'     optional experimental condition separated by a colon
 #'     (e.g., \code{09/0410:MtbLys}). Only the identifier before the
 #'     colon is used for HLA scoring.}
-#'   \item{\code{"HLA"}:}{ Optional. Comma-separated HLA alleles for
+#'   \item{\code{"HLA"}}{Optional. Comma-separated HLA alleles for
 #'     the corresponding donor in standard notation
 #'     (e.g., \code{DPA1*01:03}). Information after the colon in each
 #'     allele is ignored during HLA scoring.}
-#'   \item{\code{"counts"}:}{ Optional. Clone frequency.}
+#'   \item{\code{"counts"}}{Optional. Clone frequency.}
 #' }
 #' @param refdb_beta A \code{character} string or \code{data.frame}
 #' specifying the reference database. When a \code{data.frame} is
@@ -47,20 +47,20 @@
 #' column. \strong{Default:} \code{NULL}
 #' @param ref_cluster_size A \code{character} string defining which
 #' cluster-size probabilities to use for scoring.
-#' \itemize{
-#'   \item{\code{"original"}:}{ Standard probabilities from the
+#' \describe{
+#'   \item{\code{"original"}}{Standard probabilities from the
 #'     original algorithm, constant across sample sizes.}
-#'   \item{\code{"simulated"}:}{ Probabilities estimated for different
+#'   \item{\code{"simulated"}}{Probabilities estimated for different
 #'     sample sizes via a 500-step simulation using random sequences
 #'     from the reference database.}
 #' }
 #' \strong{Default:} \code{"original"}
 #' @param gliph_version A \code{numeric} value indicating the algorithm
 #' version.
-#' \itemize{
-#'   \item{\code{1}:}{ GLIPH scoring (product of individual scores
+#' \describe{
+#'   \item{\code{1}}{GLIPH scoring (product of individual scores
 #'     multiplied by 0.064).}
-#'   \item{\code{2}:}{ GLIPH2 scoring (product of individual scores
+#'   \item{\code{2}}{GLIPH2 scoring (product of individual scores
 #'     only).}
 #' }
 #' \strong{Default:} \code{1}
