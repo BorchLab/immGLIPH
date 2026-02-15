@@ -11,9 +11,7 @@ Character vector of AA pair strings (e.g. \code{"AA"}, \code{"AS"}).
 }
 \description{
 Returns a character vector of two-letter amino acid pairs whose BLOSUM62
-substitution score is >= 0. When \pkg{immApex} is installed, the vector is
-derived from the full BLOSUM62 matrix in
-\code{immapex_blosum.pam.matrices}; otherwise the bundled
-\code{BlosumVec} dataset is loaded as a fallback.
+substitution score is >= 0, derived from the full BLOSUM62 matrix in
+\code{immApex::immapex_blosum.pam.matrices}.
 }
 \keyword{internal}

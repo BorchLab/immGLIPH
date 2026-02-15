@@ -31,9 +31,10 @@ Imports:
     grDevices,
     viridis,
     visNetwork,
-    plotfunctions
+    plotfunctions,
+    immApex
 Suggests:
-    immApex,
+    BiocFileCache,
     scRepertoire,
     SeuratObject,
     Seurat,

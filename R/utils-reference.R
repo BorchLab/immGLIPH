@@ -9,6 +9,89 @@
       "gliph_reference")
 }
 
+#' Get or download the immGLIPH reference list
+#'
+#' Downloads the reference repertoire data from GitHub releases on first use
+#' and caches locally via \pkg{BiocFileCache}. Subsequent calls load from the
+#' cache without re-downloading.
+#'
+#' The cached file contains a named \code{list} with entries for each built-in
+#' reference database (see \code{\link{.valid_reference_names}}).
+#'
+#' @param force_download Logical. If \code{TRUE}, re-download even if cached.
+#'   **Default:** \code{FALSE}
+#' @param verbose Logical. Print messages. **Default:** \code{TRUE}
+#'
+#' @return A named \code{list} of reference databases. Each element is a list
+#'   with \code{refseqs}, \code{vgene_frequencies}, and
+#'   \code{cdr3_length_frequencies}.
+#'
+#' @examples
+#' \dontrun{
+#' ref <- getGLIPHreference()
+#' names(ref)
+#' head(ref[["human_v2.0_CD48"]]$refseqs)
+#' }
+#'
+#' @export
+getGLIPHreference <- function(force_download = FALSE, verbose = TRUE) {
+    if (!requireNamespace("BiocFileCache", quietly = TRUE)) {
+        stop("Package 'BiocFileCache' is required to download reference data.\n",
+             "Install with: BiocManager::install('BiocFileCache')",
+             call. = FALSE)
+    }
+
+    cache_dir <- tools::R_user_dir("immGLIPH", which = "cache")
+    bfc <- BiocFileCache::BiocFileCache(cache_dir, ask = FALSE)
+
+    rname <- "immGLIPH_reference_list_v1"
+    file_url <- paste0(
+        "https://github.com/BorchLab/immGLIPH/releases/download/",
+        "reference_data/reference_list.RData"
+    )
+
+    rid <- BiocFileCache::bfcquery(bfc, rname, "rname", exact = TRUE)$rid
+
+    if (force_download && length(rid)) {
+        BiocFileCache::bfcremove(bfc, rid)
+        rid <- character(0)
+    }
+
+    if (!length(rid)) {
+        if (verbose) message("Downloading immGLIPH reference data ...")
+        rid <- names(BiocFileCache::bfcadd(bfc, rname, file_url))
+    } else {
+        if (verbose) message("Loading immGLIPH reference data from cache.")
+    }
+
+    file_path <- BiocFileCache::bfcrpath(bfc, rids = rid)
+
+    env <- new.env(parent = emptyenv())
+    load(file_path, envir = env)
+    env[["reference_list"]]
+}
+
+#' Load reference list (internal, with caching)
+#'
+#' Loads the reference list, using a package-level cache to avoid repeated
+#' disk reads or downloads within a single session.
+#'
+#' @return The reference list.
+#' @keywords internal
+.get_reference_list <- function() {
+    # Session-level cache: store in package namespace environment
+    pkg_env <- parent.env(environment())
+    if (!is.null(pkg_env$.reference_list_cache)) {
+        return(pkg_env$.reference_list_cache)
+    }
+    ref <- getGLIPHreference(verbose = TRUE)
+    pkg_env$.reference_list_cache <- ref
+    ref
+}
+
+# Session-level cache placeholder (populated on first use)
+.reference_list_cache <- NULL
+
 #' Load and prepare reference database
 #'
 #' Handles both named reference databases and user-provided data frames.
@@ -100,9 +183,8 @@
         refseqs_cdr3 <- as.character(refseqs$CDR3b)
 
     } else {
-        # Named reference database
-        reference_list <- NULL
-        utils::data("reference_list", envir = environment(), package = "immGLIPH")
+        # Named reference database - load via BiocFileCache
+        reference_list <- .get_reference_list()
         refseqs <- as.data.frame(reference_list[[refdb_beta]]$refseqs)
         refseqs[] <- lapply(refseqs, as.character)
 
@@ -139,23 +221,15 @@
 #' Get BLOSUM62-compatible amino acid pairs
 #'
 #' Returns a character vector of two-letter amino acid pairs whose BLOSUM62
-#' substitution score is >= 0. When \pkg{immApex} is installed, the vector is
-#' derived from the full BLOSUM62 matrix in
-#' \code{immapex_blosum.pam.matrices}; otherwise the bundled
-#' \code{BlosumVec} dataset is loaded as a fallback.
+#' substitution score is >= 0, derived from the full BLOSUM62 matrix in
+#' \code{immApex::immapex_blosum.pam.matrices}.
 #'
 #' @return Character vector of AA pair strings (e.g. \code{"AA"}, \code{"AS"}).
 #' @keywords internal
 .get_blosum_vec <- function() {
-    if (requireNamespace("immApex", quietly = TRUE)) {
-        mat <- immApex::immapex_blosum.pam.matrices[["BLOSUM62"]]
-        idx <- which(mat >= 0, arr.ind = TRUE)
-        return(paste0(rownames(mat)[idx[, 1]], colnames(mat)[idx[, 2]]))
-    }
-    # Fallback: load from bundled package data
-    BlosumVec <- NULL
-    utils::data("BlosumVec", envir = environment(), package = "immGLIPH")
-    BlosumVec
+    mat <- immApex::immapex_blosum.pam.matrices[["BLOSUM62"]]
+    idx <- which(mat >= 0, arr.ind = TRUE)
+    paste0(rownames(mat)[idx[, 1]], colnames(mat)[idx[, 2]])
 }
 
 #' Prepare motif regions from sequences

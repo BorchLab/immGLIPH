@@ -219,8 +219,7 @@ clusterScoring <- function(cluster_list,
   utils::data(ref_cluster_sizes, envir = environment(), package = "immGLIPH")
   ref_cluster_sizes <- ref_cluster_sizes[[ref_cluster_size]]
 
-  reference_list <- NULL
-  utils::data("reference_list", envir = environment(), package = "immGLIPH")
+  reference_list <- .get_reference_list()
 
   if(is.character(refdb_beta) && refdb_beta %in% names(reference_list)){
     refdb_name <- refdb_beta

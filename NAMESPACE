@@ -3,6 +3,7 @@
 export(clusterScoring)
 export(deNovoTCRs)
 export(findMotifs)
+export(getGLIPHreference)
 export(getRandomSubsample)
 export(gliph2)
 export(gliph_combined)
