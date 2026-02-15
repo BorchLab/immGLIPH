@@ -2,10 +2,10 @@
 #'
 #' Searches a character vector of amino acid sequences for k-mer motifs and
 #' returns their frequencies. Both continuous and discontinuous (gapped) motifs
-#' are supported. When \pkg{immApex} is installed, the C++-accelerated
-#' \code{\link[immApex]{calculateMotif}} backend is used automatically for
-#' improved performance; otherwise the function falls back to a pure-R
-#' implementation based on \code{\link[stringdist]{qgrams}}.
+#' are supported. When \pkg{immApex} (>= 2.0.0) is installed, the
+#' C++-accelerated \code{immApex::calculateMotif()} backend is used
+#' automatically for improved performance; otherwise the function falls back
+#' to a pure-R implementation based on \code{\link[stringdist]{qgrams}}.
 #'
 #' @param seqs A character vector of amino acid sequences in which motifs
 #'   will be identified and counted.
@@ -33,7 +33,8 @@ findMotifs <- function(seqs, q = 2:4, kmer_mindepth = NULL,
   ## ---- immApex C++ fast path ------------------------------------------------
   if (requireNamespace("immApex", quietly = TRUE) &&
       exists("calculateMotif", asNamespace("immApex"))) {
-    result <- immApex::calculateMotif(
+    calcMotif <- get("calculateMotif", asNamespace("immApex"))
+    result <- calcMotif(
       input.sequences      = seqs,
       motif.lengths        = q,
       min.depth            = if (is.null(kmer_mindepth)) 1L else kmer_mindepth,

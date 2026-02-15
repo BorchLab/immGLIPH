@@ -54,6 +54,8 @@
 .global_cutoff_immapex <- function(seqs, motif_region, sequences,
                                    gccutoff, global_vgene, verbose) {
 
+  buildNet <- get("buildNetwork", asNamespace("immApex"))
+
   ## Build input data frame when V-gene filtering is requested
   if (global_vgene) {
     ## Match V genes for each unique CDR3b
@@ -66,7 +68,7 @@
     )
     input_df <- merge(input_df, vgene_lookup, by = "CDR3b", all.x = TRUE)
 
-    edge_result <- immApex::buildNetwork(
+    edge_result <- buildNet(
       input.data = input_df,
       seq_col    = "motif",
       v_col      = "TRBV",
@@ -77,7 +79,7 @@
       metric     = "hamming"
     )
   } else {
-    edge_result <- immApex::buildNetwork(
+    edge_result <- buildNet(
       input.sequences = motif_region,
       threshold       = gccutoff,
       ids             = seqs,

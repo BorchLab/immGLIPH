@@ -62,8 +62,9 @@
   if (requireNamespace("immApex", quietly = TRUE) &&
       exists("calculateMotif", asNamespace("immApex"))) {
     ## ---- immApex C++ fast path: single-call with multithreading ----
+    calcMotif <- get("calculateMotif", asNamespace("immApex"))
     if (verbose) message("Finding motifs in reference sequences (immApex)...")
-    ref_motifs_df <- immApex::calculateMotif(
+    ref_motifs_df <- calcMotif(
       input.sequences = refseqs_motif_region,
       motif.lengths   = motif_length,
       min.depth       = 1L,
@@ -73,7 +74,7 @@
     colnames(ref_motifs_df)[colnames(ref_motifs_df) == "frequency"] <- "count"
 
     if (verbose) message("Finding motifs in sample sequences (immApex)...")
-    motifs_df <- immApex::calculateMotif(
+    motifs_df <- calcMotif(
       input.sequences = motif_region,
       motif.lengths   = motif_length,
       min.depth       = 1L,
@@ -196,7 +197,7 @@
   #   # sample seqs without motif | # reference seqs without motif
   # -----------------------------------------------------------------------
   n_unique_seqs    <- length(unique(seqs))
-  n_unique_refseqs <- length(unique(refseqs$CDR3b))
+  n_unique_refseqs <- length(unique(refseqs))
 
   motifs_df$p.value <- stats::phyper(
     q          = motifs_df$counts - 1,

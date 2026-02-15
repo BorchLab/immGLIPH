@@ -113,7 +113,7 @@
   ## Step 2: Build struct tags for reference sequences
   ## -----------------------------------------------------------------
   reference_seqs <- data.frame(
-    seq = unique(refseqs$CDR3b),
+    seq = unique(refseqs),
     stringsAsFactors = FALSE
   )
   if (structboundaries) {
@@ -271,7 +271,7 @@
   cluster_list$num_in_ref[is.na(cluster_list$num_in_ref)] <- 0
 
   ## Fisher's exact test (hypergeometric)
-  n_uniq_ref    <- length(unique(refseqs$CDR3b))
+  n_uniq_ref    <- length(unique(refseqs))
   n_uniq_sample <- length(unique(seqs))
 
   cluster_list$fisher.score <- stats::phyper(
