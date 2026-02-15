@@ -368,7 +368,7 @@ runGLIPH <- function(cdr3_sequences,
   seqs <- unique(sequences$CDR3b)
   motif_region <- .prepare_motif_region(seqs, structboundaries, boundary_size)
   refseqs_motif_region <- .prepare_motif_region(
-    unique(refseqs$CDR3b), structboundaries, boundary_size
+    unique(refseqs), structboundaries, boundary_size
   )
   ## Also need "all" motif region for combined approach
   all_motif_region <- .prepare_motif_region(
