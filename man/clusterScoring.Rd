@@ -7,7 +7,7 @@
 clusterScoring(
   cluster_list,
   cdr3_sequences,
-  refdb_beta = "gliph_reference",
+  refdb_beta = "human_v2.0_CD48",
   v_usage_freq = NULL,
   cdr3_length_freq = NULL,
   ref_cluster_size = "original",
@@ -44,14 +44,15 @@ allele is ignored during HLA scoring.}
 \item{refdb_beta}{A \code{character} string or \code{data.frame}
 specifying the reference database. When a \code{data.frame} is
 supplied, CDR3b sequences must be in the first column and V-gene
-information (if available) in the second column. The following
-keyword may be used to select a built-in database:
-\itemize{
-\item{\code{"gliph_reference"}:}{ 162,165 CDR3b sequences of
-naive human CD4+ or CD8+ T cells from two individuals (GLIPH
-publication).}
-}
-\strong{Default:} \code{"gliph_reference"}}
+information (if available) in the second column. Built-in databases
+include \code{"human_v1.0_CD4"}, \code{"human_v1.0_CD8"},
+\code{"human_v1.0_CD48"}, \code{"human_v2.0_CD4"},
+\code{"human_v2.0_CD8"}, \code{"human_v2.0_CD48"},
+\code{"mouse_v1.0_CD4"}, \code{"mouse_v1.0_CD8"},
+\code{"mouse_v1.0_CD48"}, and the legacy alias
+\code{"gliph_reference"} (= \code{"human_v1.0_CD48"}).
+See \code{\link{reference_list}} for details.
+\strong{Default:} \code{"human_v2.0_CD48"}}
 
 \item{v_usage_freq}{A \code{data.frame} with V-gene alleles in the
 first column and their naive-repertoire frequencies in the second
@@ -118,7 +119,7 @@ res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200), ],
 scoring_results <- clusterScoring(
     cluster_list = res$cluster_list,
     cdr3_sequences = gliph_input_data[seq_len(200), ],
-    refdb_beta = "gliph_reference",
+    refdb_beta = "human_v2.0_CD48",
     gliph_version = 1,
     sim_depth = 100,
     n_cores = 1)

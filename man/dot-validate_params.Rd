@@ -5,7 +5,7 @@
 \title{Validate parameters for runGLIPH}
 \usage{
 .validate_params(
-  refdb_beta = "gliph_reference",
+  refdb_beta = "human_v2.0_CD48",
   v_usage_freq = NULL,
   cdr3_length_freq = NULL,
   ref_cluster_size = "original",

@@ -5,18 +5,34 @@
 \alias{gliph_input_data}
 \title{Example TCR input data}
 \format{
-An object of class \code{data.frame} with 2067 rows and 11 columns.
+An object of class \code{data.frame} with 365 rows and 3 columns.
 }
 \source{
-Glanville, J. et al. Identifying specificity groups in the T cell
-receptor repertoire. \emph{Nature} 547, 94--98 (2017).
+Yost, K. E. et al. Clonal replacement of tumor-specific T cells
+following PD-1 blockade. \emph{Nature Medicine} 25, 1251--1259 (2019).
+
+Built from \pkg{scRepertoire} example data; see
+\code{data-raw/build_example_data.R}.
 }
 \usage{
 data(gliph_input_data)
 }
 \description{
-A \code{data.frame} of approximately 2,000 unique TCRs of known antigen
-specificity, suitable for demonstrating \code{\link{runGLIPH}} and related
-functions.
+A \code{data.frame} of 365 TRB CDR3 sequences with V-gene and patient
+annotations, derived from the \pkg{scRepertoire} example dataset (Yost
+et al. 2021). The data were extracted from the \code{\link{gliph_sce}}
+SingleCellExperiment object using \code{immApex::getIR()}.
+}
+\details{
+\describe{
+\item{\code{CDR3b}}{Amino acid sequence of the TRB CDR3 region.}
+\item{\code{TRBV}}{TRBV gene name (e.g. \code{"TRBV9"}).}
+\item{\code{patient}}{Patient/sample identifier
+(e.g. \code{"P17B"}, \code{"P19L"}).}
+}
+}
+\seealso{
+\code{\link{gliph_sce}} for the parent SingleCellExperiment object,
+\code{\link{runGLIPH}} for the main analysis function.
 }
 \keyword{datasets}
