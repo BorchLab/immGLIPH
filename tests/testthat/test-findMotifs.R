@@ -1,3 +1,7 @@
+# Tests for findMotifs()
+
+# ---- Core findMotifs tests ---------------------------------------------------
+
 test_that("findMotifs returns data frame with motif and V1 columns", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
   result <- findMotifs(seqs)
@@ -45,7 +49,7 @@ test_that("findMotifs returns empty data frame for empty input", {
   expect_true(is.null(result) || nrow(result) == 0)
 })
 
-## ---- stringdist fallback tests ------------------------------------------
+# ---- stringdist fallback tests -----------------------------------------------
 
 test_that(".find_motifs_stringdist returns data frame with motif and V1", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
@@ -62,7 +66,7 @@ test_that(".find_motifs_stringdist handles discontinuous motifs", {
   expect_true(nrow(disc) > 0)
 })
 
-## ---- immApex backend equivalence tests ----------------------------------
+# ---- immApex backend equivalence tests ---------------------------------------
 
 test_that("immApex backend produces same motifs as stringdist backend", {
   skip_if_not_installed("immApex")

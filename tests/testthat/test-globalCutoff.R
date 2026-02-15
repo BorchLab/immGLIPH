@@ -1,3 +1,7 @@
+# Tests for .global_cutoff() and related functions
+
+# ---- .global_cutoff_stringdist -----------------------------------------------
+
 test_that(".global_cutoff_stringdist returns correct structure", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRQTNEKLFF", "CASSLDRGEVFF")
   motif_region <- substr(seqs, 4, nchar(seqs) - 3)
@@ -50,6 +54,8 @@ test_that(".global_cutoff_stringdist returns empty for zero cutoff on different 
   expect_equal(nrow(result$edges), 0)
 })
 
+# ---- .global_cutoff dispatch -------------------------------------------------
+
 test_that(".global_cutoff dispatches correctly", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF")
   motif_region <- substr(seqs, 4, nchar(seqs) - 3)
@@ -74,7 +80,7 @@ test_that(".global_cutoff dispatches correctly", {
   expect_s3_class(result$edges, "data.frame")
 })
 
-## ---- immApex backend equivalence ----------------------------------------
+# ---- immApex backend equivalence --------------------------------------------
 
 test_that("immApex buildNetwork backend matches stringdist backend", {
   skip_if_not_installed("immApex")

@@ -1,3 +1,7 @@
+# Tests for .extract_input() and .parse_sequences()
+
+# ---- .extract_input ----------------------------------------------------------
+
 test_that(".extract_input handles character vector", {
   seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
   result <- immGLIPH:::.extract_input(seqs)
@@ -17,6 +21,13 @@ test_that(".extract_input handles data frame with CDR3b column", {
   expect_true("CDR3b" %in% colnames(result))
   expect_true("TRBV" %in% colnames(result))
 })
+
+test_that(".extract_input rejects invalid input types", {
+  expect_error(immGLIPH:::.extract_input(42), "must be a character vector")
+  expect_error(immGLIPH:::.extract_input(NULL), "must be a character vector")
+})
+
+# ---- .standardize_colnames ---------------------------------------------------
 
 test_that(".standardize_colnames maps alternative names", {
   df <- data.frame(
@@ -41,10 +52,7 @@ test_that(".standardize_colnames does not overwrite existing canonical names", {
   expect_equal(colnames(result), c("CDR3b", "TRBV"))
 })
 
-test_that(".extract_input rejects invalid input types", {
-  expect_error(immGLIPH:::.extract_input(42), "must be a character vector")
-  expect_error(immGLIPH:::.extract_input(NULL), "must be a character vector")
-})
+# ---- .parse_sequences --------------------------------------------------------
 
 test_that(".parse_sequences filters amino acid sequences", {
   df <- data.frame(
