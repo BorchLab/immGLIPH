@@ -38,6 +38,7 @@ Suggests:
     Seurat,
     SingleCellExperiment,
     testthat (>= 3.0.0),
+    withr,
     BiocStyle,
     knitr,
     rmarkdown
