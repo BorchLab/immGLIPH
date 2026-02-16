@@ -105,7 +105,8 @@
     }
 
     # Receive all motifs in the reference sequences
-    ref_motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
+    ref_motifs_list <- foreach::foreach(i = seq_len(no_cores),
+                                       .packages = "immGLIPH") %dopar% {
       return(findMotifs(seqs = refseqs_motif_region[id_list[[i]]],
                         q = motif_length,
                         discontinuous = discontinuous_motifs))
@@ -149,7 +150,8 @@
     }
 
     # Receive all motifs in the sample sequences
-    motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
+    motifs_list <- foreach::foreach(i = seq_len(no_cores),
+                                    .packages = "immGLIPH") %dopar% {
       return(findMotifs(seqs = motif_region[id_list[[i]]],
                         q = motif_length,
                         discontinuous = discontinuous_motifs))

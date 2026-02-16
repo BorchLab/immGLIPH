@@ -86,7 +86,8 @@
   ## ---- Step 2: Repeated random sampling from the reference DB -----------
   if (verbose) message("Running ", sim_depth, " random sampling iterations.")
 
-  res <- foreach::foreach(i = seq_len(sim_depth), .inorder = FALSE) %dopar% {
+  res <- foreach::foreach(i = seq_len(sim_depth), .inorder = FALSE,
+                          .packages = "immGLIPH") %dopar% {
     motif_sample <- getRandomSubsample(
       cdr3_len_stratify        = cdr3_len_stratify,
       vgene_stratify           = vgene_stratify,
