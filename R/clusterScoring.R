@@ -276,7 +276,7 @@ clusterScoring <- function(cluster_list,
   ##                           Scoring                           ##
   #################################################################
 
-  doParallel::registerDoParallel(n_cores)
+  .setup_parallel(n_cores)
 
   actCluster <- NULL
   res <- foreach::foreach(actCluster = seq_along(cluster_list)) %dopar% {
@@ -432,7 +432,7 @@ clusterScoring <- function(cluster_list,
     output
   }
 
-  doParallel::stopImplicitCluster()
+  .stop_parallel()
 
   res <- data.frame(matrix(unlist(res), ncol = 2+length(score_names), byrow = TRUE))
   colnames(res) <- c("leader.tag", "total.score", score_names)
