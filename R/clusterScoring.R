@@ -185,7 +185,7 @@ clusterScoring <- function(cluster_list,
     if(length(n_cores) > 1) stop("n_cores has to be a single number")
     if(n_cores < 1) stop("n_cores must be at least 1")
 
-    n_cores <- min(n_cores, parallel::detectCores()-2)
+    n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
   }
 
   #################################################################

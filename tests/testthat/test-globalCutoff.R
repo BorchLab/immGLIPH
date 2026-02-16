@@ -1,5 +1,9 @@
 # Tests for .global_cutoff() and related functions
 
+# Register a parallel backend for internal functions that use %dopar%
+doParallel::registerDoParallel(1)
+withr::defer(doParallel::stopImplicitCluster(), teardown_env())
+
 # ---- .global_cutoff_stringdist -----------------------------------------------
 
 test_that(".global_cutoff_stringdist returns correct structure", {

@@ -68,7 +68,7 @@
     )
     input_df <- merge(input_df, vgene_lookup, by = "CDR3b", all.x = TRUE)
 
-    edge_result <- buildNet(
+    edge_result <- suppressWarnings(buildNet(
       input.data = input_df,
       seq_col    = "motif",
       v_col      = "TRBV",
@@ -77,15 +77,15 @@
       ids        = input_df$CDR3b,
       output     = "edges",
       dist_type  = "hamming"
-    )
+    ))
   } else {
-    edge_result <- buildNet(
+    edge_result <- suppressWarnings(buildNet(
       input.sequences = motif_region,
       threshold       = gccutoff,
       ids             = seqs,
       output          = "edges",
       dist_type       = "hamming"
-    )
+    ))
   }
 
   ## Convert to expected format
