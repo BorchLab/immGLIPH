@@ -119,7 +119,7 @@ plotNetwork <- function(clustering_output = NULL,
     if(length(n_cores) > 1) stop("n_cores has to be a single number")
     if(n_cores < 1) stop("n_cores must be at least 1")
 
-    n_cores <- min(n_cores, parallel::detectCores()-2)
+    n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
   }
 
   #################################################################
@@ -127,7 +127,7 @@ plotNetwork <- function(clustering_output = NULL,
   #################################################################
 
   ### Initiate parallelization
-  doParallel::registerDoParallel(n_cores)
+  .setup_parallel(n_cores)
 
   ### Get cluster_list and cluster_properties with at least cluster_min_size members
   # cluster_list:       contains all members of the cluster and the sequence specific additional information (e.g. patient, count, etc.)
@@ -698,7 +698,7 @@ plotNetwork <- function(clustering_output = NULL,
     lenodes <- data.frame(label = leg.info[,1], color = leg.info[,2], shape="dot", size=10)
   }
 
-  doParallel::stopImplicitCluster()
+  .stop_parallel()
 
   message("Drawing the graph.")
 

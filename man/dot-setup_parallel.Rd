@@ -13,6 +13,12 @@
 The actual number of cores being used
 }
 \description{
-Setup parallel backend
+On Unix-like systems (macOS, Linux) \code{doParallel} uses forked
+processes that inherit the loaded package namespace. On Windows, PSOCK
+clusters are used instead; these require loading the package on each
+worker via \code{library()}, which fails during \code{R CMD check}
+because the package is not yet installed in the standard library path.
+To avoid this, we fall back to sequential execution (\code{registerDoSEQ})
+when only one core is requested or when running on Windows.
 }
 \keyword{internal}

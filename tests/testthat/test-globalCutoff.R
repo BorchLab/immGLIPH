@@ -1,8 +1,7 @@
 # Tests for .global_cutoff() and related functions
 
-# Register a parallel backend for internal functions that use %dopar%
-doParallel::registerDoParallel(1)
-withr::defer(doParallel::stopImplicitCluster(), teardown_env())
+# Register a sequential backend for internal functions that use %dopar%
+foreach::registerDoSEQ()
 
 # ---- .global_cutoff_stringdist -----------------------------------------------
 

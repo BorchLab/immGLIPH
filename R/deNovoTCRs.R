@@ -169,7 +169,7 @@ deNovoTCRs <- function(convergence_group_tag,
     if(length(n_cores) > 1) stop("n_cores has to be a single number")
     if(n_cores < 1) stop("n_cores must be at least 1")
 
-    n_cores <- min(n_cores, parallel::detectCores()-2)
+    n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
   }
 
   # Amino acids one letter code
@@ -208,7 +208,7 @@ deNovoTCRs <- function(convergence_group_tag,
   #################################################################
 
   ### Initiate parallelization
-  doParallel::registerDoParallel(n_cores)
+  .setup_parallel(n_cores)
 
   # get all sequences in cluster
   crg_cdr3_seqs <- all_crg_cdr3_seqs
@@ -579,7 +579,7 @@ deNovoTCRs <- function(convergence_group_tag,
   dt <- (t2-t1)
   message("Total time = ", dt, " ", units(dt))
 
-  doParallel::stopImplicitCluster()
+  .stop_parallel()
 
 
   ### Closing time!
