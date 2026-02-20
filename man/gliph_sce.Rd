@@ -5,7 +5,7 @@
 \alias{gliph_sce}
 \title{Example SingleCellExperiment with TCR clonal information}
 \format{
-An object of class \code{SingleCellExperiment} with 2000 rows and 500 columns.
+A SingleCellExperiment with 2000 genes and 500 cells.
 }
 \source{
 Yost, K. E. et al. Clonal replacement of tumor-specific T cells

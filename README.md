@@ -1,8 +1,8 @@
 # immGLIPH
 
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/ncborcherding/immGLIPH/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ncborcherding/immGLIPH/actions/workflows/R-CMD-check.yaml)
-  [![Codecov test coverage](https://codecov.io/gh/ncborcherding/immGLIPH/graph/badge.svg)](https://app.codecov.io/gh/ncborcherding/immGLIPH)
+  [![R-CMD-check](https://github.com/BorchLab/immGLIPH/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/BorchLab/immGLIPH/actions/workflows/R-CMD-check.yaml)
+  [![Codecov test coverage](https://codecov.io/gh/BorchLab/immGLIPH/graph/badge.svg)](https://app.codecov.io/gh/BorchLab/immGLIPH)
 <!-- badges: end -->
 
 An R implementation of the **GLIPH** and **GLIPH2** algorithms for clustering

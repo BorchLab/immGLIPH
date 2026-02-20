@@ -110,21 +110,21 @@ enrichment of CDR3 lengths, enrichment of V genes, enrichment of
 clonal expansions, and enrichment of common HLA alleles.
 }
 \examples{
-\dontrun{
 utils::data("gliph_input_data")
+ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 
 res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200), ],
+                refdb_beta = ref_df,
                 sim_depth = 100,
                 n_cores = 1)
 
 scoring_results <- clusterScoring(
     cluster_list = res$cluster_list,
     cdr3_sequences = gliph_input_data[seq_len(200), ],
-    refdb_beta = "human_v2.0_CD48",
+    refdb_beta = ref_df,
     gliph_version = 1,
     sim_depth = 100,
     n_cores = 1)
-}
 
 }
 \references{

@@ -5,7 +5,7 @@
 \alias{gliph_input_data}
 \title{Example TCR input data}
 \format{
-An object of class \code{data.frame} with 365 rows and 3 columns.
+A data.frame with 365 rows and 3 columns (CDR3b, TRBV, patient).
 }
 \source{
 Yost, K. E. et al. Clonal replacement of tumor-specific T cells

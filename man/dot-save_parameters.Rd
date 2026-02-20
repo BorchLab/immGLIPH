@@ -11,6 +11,9 @@
 
 \item{result_folder}{Path to output folder}
 }
+\value{
+NULL (invisibly). Called for side effect of writing file.
+}
 \description{
 Save parameter list to file
 }

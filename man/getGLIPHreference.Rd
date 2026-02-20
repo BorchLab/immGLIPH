@@ -27,7 +27,13 @@ The cached file contains a named \code{list} with entries for each built-in
 reference database (see \code{\link{.valid_reference_names}}).
 }
 \examples{
-\dontrun{
+# Available reference database names
+c("human_v1.0_CD4", "human_v1.0_CD8", "human_v1.0_CD48",
+  "human_v2.0_CD4", "human_v2.0_CD8", "human_v2.0_CD48",
+  "mouse_v1.0_CD4", "mouse_v1.0_CD8", "mouse_v1.0_CD48",
+  "gliph_reference")
+
+\donttest{
 ref <- getGLIPHreference()
 names(ref)
 head(ref[["human_v2.0_CD48"]]$refseqs)

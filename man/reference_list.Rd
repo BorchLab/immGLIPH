@@ -3,6 +3,10 @@
 \name{reference_list}
 \alias{reference_list}
 \title{GLIPH reference repertoire list (external data)}
+\format{
+NULL. Data is downloaded on first use via
+\code{\link{getGLIPHreference}}.
+}
 \source{
 Glanville, J. et al. Identifying specificity groups in the T cell receptor
 repertoire. \emph{Nature} 547, 94--98 (2017).

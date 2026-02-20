@@ -6,6 +6,9 @@
 \usage{
 .stop_parallel()
 }
+\value{
+NULL (invisibly). Called for side effect.
+}
 \description{
 Stop parallel backend
 }

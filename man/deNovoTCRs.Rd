@@ -103,20 +103,26 @@ from the convergence group, and optionally normalized against a reference
 database. The top-scoring sequences are returned.
 }
 \examples{
-\dontrun{
-utils::data("gliph_input_data")
-res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
-  method = "gliph1",
-  sim_depth = 100,
-  n_cores = 1)
-
+# Build a minimal clustering output to demonstrate deNovoTCRs
+fake_cluster <- data.frame(
+  CDR3b = c("CASSLAPGATNEKLFF", "CASSLAPGGTNEKLFF",
+            "CASSLAPGDTNEKLFF", "CASSLAPGETNEKLFF",
+            "CASSLAPGANEKLFF",  "CASSLAPGVTNEKLFF"),
+  TRBV  = rep("TRBV5-1", 6),
+  stringsAsFactors = FALSE
+)
+fake_output <- list(cluster_list = list("motif-LAP" = fake_cluster))
+ref_seqs <- fake_cluster[, c("CDR3b", "TRBV")]
 new_seqs <- deNovoTCRs(
-  convergence_group_tag = res$cluster_properties$tag[1],
-  clustering_output = res,
-  sims = 10000,
-  make_figure = TRUE,
-  n_cores = 1)
-}
+  convergence_group_tag = "motif-LAP",
+  clustering_output = fake_output,
+  refdb_beta = ref_seqs,
+  sims = 100,
+  num_tops = 10,
+  min_length = 8,
+  make_figure = FALSE,
+  n_cores = 1
+)
 
 }
 \references{

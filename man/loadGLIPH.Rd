@@ -21,3 +21,19 @@ Reads the tab-delimited output files produced by \code{\link{runGLIPH}} (when
 \code{result_folder} was specified) and reconstructs the same list structure
 that \code{runGLIPH()} returns.
 }
+\examples{
+utils::data("gliph_input_data")
+ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
+tmp_dir <- tempfile("gliph_out_")
+res <- runGLIPH(
+  cdr3_sequences = gliph_input_data[seq_len(200), ],
+  method = "gliph1",
+  refdb_beta = ref_df,
+  result_folder = tmp_dir,
+  sim_depth = 50,
+  n_cores = 1
+)
+reloaded <- loadGLIPH(result_folder = tmp_dir)
+unlink(tmp_dir, recursive = TRUE)
+
+}
