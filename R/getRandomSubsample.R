@@ -33,6 +33,14 @@
 #' @return A character vector of length \code{length(motif_region)} drawn from
 #'   \code{refseqs_motif_region}.
 #'
+#' @examples
+#' ref_seqs <- c("ASSG", "ASSD", "ASSE", "ASSF", "ASSK", "ASSL")
+#' sample_seqs <- c("ASSG", "ASSF", "ASSL")
+#' sub <- getRandomSubsample(
+#'   refseqs_motif_region = ref_seqs,
+#'   motif_region = sample_seqs
+#' )
+#'
 #' @export
 
 getRandomSubsample <- function(cdr3_len_stratify = FALSE,
