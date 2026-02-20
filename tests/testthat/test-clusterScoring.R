@@ -12,7 +12,7 @@ test_that("clusterScoring rejects non-list cluster_list", {
 
 test_that("clusterScoring rejects non-data.frame cdr3_sequences", {
   expect_error(
-    clusterScoring(cluster_list = list(),
+    clusterScoring(cluster_list = list(a = data.frame(CDR3b = "X")),
                    cdr3_sequences = list(CDR3b = "CASSLAPGATNEKLFF")),
     "data.frame"
   )
@@ -59,7 +59,7 @@ test_that("clusterScoring rejects invalid refdb_beta name", {
 })
 
 test_that("clusterScoring validates refdb_beta", {
-  expect_error(clusterScoring(cluster_list = list(),
+  expect_error(clusterScoring(cluster_list = list(a = data.frame(CDR3b = "X")),
                                cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF"),
                                refdb_beta = "nonexistent_ref"),
                "refdb_beta must be")
@@ -93,7 +93,7 @@ test_that("clusterScoring rejects invalid sim_depth", {
 })
 
 test_that("clusterScoring validates sim_depth minimum", {
-  expect_error(clusterScoring(cluster_list = list(),
+  expect_error(clusterScoring(cluster_list = list(a = data.frame(CDR3b = "X")),
                                cdr3_sequences = data.frame(CDR3b = "CASSLAPGATNEKLFF"),
                                sim_depth = 0),
                "sim_depth")
