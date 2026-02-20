@@ -62,3 +62,12 @@ enabled, the function preserves the CDR3 length and/or V-gene distribution
 of the sample in the subsample. This is used internally by the repeated
 random sampling (RRS) local-similarity method in \code{\link{runGLIPH}}.
 }
+\examples{
+ref_seqs <- c("ASSG", "ASSD", "ASSE", "ASSF", "ASSK", "ASSL")
+sample_seqs <- c("ASSG", "ASSF", "ASSL")
+sub <- getRandomSubsample(
+  refseqs_motif_region = ref_seqs,
+  motif_region = sample_seqs
+)
+
+}

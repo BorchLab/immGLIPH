@@ -267,10 +267,11 @@ if (!is.null(res_gliph2$connections)) {
 The `"custom"` method allows independent control over each algorithmic
 component:
 
-```{r eval=FALSE}
+```{r}
 res_custom <- runGLIPH(
   cdr3_sequences  = gliph_input_data[seq_len(200), ],
   method          = "custom",
+  refdb_beta      = ref_df,
   local_method    = "fisher",    # or "rrs"
   global_method   = "cutoff",    # or "fisher"
   clustering_method = "GLIPH1.0", # or "GLIPH2.0"
@@ -290,10 +291,11 @@ For the Fisher-based local method (GLIPH2), you can adjust:
   (default `c(1000, 100, 10)` for 2-mers, 3-mers, 4-mers)
 - **`kmer_mindepth`**: Minimum motif observations in the sample (default 3)
 
-```{r eval=FALSE}
+```{r}
 res_strict <- runGLIPH(
   cdr3_sequences = gliph_input_data[seq_len(200), ],
   method         = "gliph2",
+  refdb_beta     = ref_df,
   lcminp         = 0.001,            # Stricter p-value
   lcminove       = c(10000, 1000, 100), # Higher fold-change
   sim_depth      = 100,
@@ -431,7 +433,7 @@ data):
 rescored <- clusterScoring(
   cluster_list   = res_gliph1$cluster_list,
   cdr3_sequences = gliph_input_data[seq_len(200), ],
-  refdb_beta     = "gliph_reference",
+  refdb_beta     = "human_v2.0_CD48",
   gliph_version  = 2,
   sim_depth      = 500,
   n_cores        = 1

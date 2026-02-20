@@ -75,15 +75,15 @@ zoom, hover over a node for details, and click a node to highlight its
 direct neighbors.
 }
 \examples{
-\dontrun{
 utils::data("gliph_input_data")
+ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
                 method = "gliph1",
+                refdb_beta = ref_df,
                 sim_depth = 100,
                 n_cores = 1)
 
 plotNetwork(clustering_output = res,
             n_cores = 1)
-}
 
 }

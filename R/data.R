@@ -12,6 +12,7 @@
 #'     (e.g. \code{"P17B"}, \code{"P19L"}).}
 #' }
 #'
+#' @format A data.frame with 365 rows and 3 columns (CDR3b, TRBV, patient).
 #' @docType data
 #' @keywords datasets
 #' @name gliph_input_data
@@ -41,6 +42,7 @@
 #' This object demonstrates how to pass a SingleCellExperiment directly to
 #' \code{\link{runGLIPH}}.
 #'
+#' @format A SingleCellExperiment with 2000 genes and 500 cells.
 #' @docType data
 #' @keywords datasets
 #' @name gliph_sce
@@ -67,6 +69,7 @@
 #'     actual sample size is used.}
 #' }
 #'
+#' @format A list with 2 elements: original and simulated.
 #' @docType data
 #' @keywords datasets
 #' @name ref_cluster_sizes
@@ -82,6 +85,7 @@
 #' segments that may appear in the CDR3 region. These fragments are used by the
 #' GLIPH2 algorithm to identify germline-encoded sequence segments.
 #'
+#' @format A list of 3 data.frames: gTRV, gTRD, and gTRJ.
 #' @docType data
 #' @keywords datasets
 #' @name gTRB
@@ -137,6 +141,8 @@
 #'
 #' Raw data downloaded from \url{http://50.255.35.37:8080/tools}.
 #'
+#' @format NULL. Data is downloaded on first use via
+#'   \code{\link{getGLIPHreference}}.
 #' @name reference_list
 #' @keywords datasets
 NULL

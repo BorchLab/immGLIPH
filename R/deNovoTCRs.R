@@ -72,20 +72,26 @@
 #' \code{<convergence_group_tag>_de_novo.txt} is also written to disk.
 #'
 #' @examples
-#' \dontrun{
-#' utils::data("gliph_input_data")
-#' res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
-#'   method = "gliph1",
-#'   sim_depth = 100,
-#'   n_cores = 1)
-#'
+#' # Build a minimal clustering output to demonstrate deNovoTCRs
+#' fake_cluster <- data.frame(
+#'   CDR3b = c("CASSLAPGATNEKLFF", "CASSLAPGGTNEKLFF",
+#'             "CASSLAPGDTNEKLFF", "CASSLAPGETNEKLFF",
+#'             "CASSLAPGANEKLFF",  "CASSLAPGVTNEKLFF"),
+#'   TRBV  = rep("TRBV5-1", 6),
+#'   stringsAsFactors = FALSE
+#' )
+#' fake_output <- list(cluster_list = list("motif-LAP" = fake_cluster))
+#' ref_seqs <- fake_cluster[, c("CDR3b", "TRBV")]
 #' new_seqs <- deNovoTCRs(
-#'   convergence_group_tag = res$cluster_properties$tag[1],
-#'   clustering_output = res,
-#'   sims = 10000,
-#'   make_figure = TRUE,
-#'   n_cores = 1)
-#' }
+#'   convergence_group_tag = "motif-LAP",
+#'   clustering_output = fake_output,
+#'   refdb_beta = ref_seqs,
+#'   sims = 100,
+#'   num_tops = 10,
+#'   min_length = 8,
+#'   make_figure = FALSE,
+#'   n_cores = 1
+#' )
 #'
 #' @references Glanville, Jacob, et al.
 #' "Identifying specificity groups in the T cell receptor repertoire." Nature 547.7661 (2017): 94.
@@ -197,7 +203,7 @@ deNovoTCRs <- function(convergence_group_tag,
   if(length(excluded) > 0){
     all_crg_cdr3_seqs <- all_crg_cdr3_seqs[-excluded]
     if(length(all_crg_cdr3_seqs) > 0){
-      message("Warning: ", length(excluded), " sequences of the convergence group were excluded from the further procedure due to falling below a minimum length of ", min_length, ".")
+      warning(length(excluded), " sequences of the convergence group were excluded from the further procedure due to falling below a minimum length of ", min_length, ".", call. = FALSE)
     } else {
       stop("No sequences of the convergence group are of minimum length of ", min_length, ". For further procedure, adjust the parameter 'min_length'")
     }
@@ -230,7 +236,7 @@ deNovoTCRs <- function(convergence_group_tag,
       if(ncol(refseqs) > 1 && v_gene_norm == TRUE){
         message("Notification: Second column of reference database is considered as V-gene information.")
       } else if(v_gene_norm == TRUE){
-        message("Warning: Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.")
+        warning("Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.", call. = FALSE)
         v_gene_norm <- FALSE
       }
       if(ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
@@ -245,7 +251,7 @@ deNovoTCRs <- function(convergence_group_tag,
       if(nrow(refseqs) == 0){
         normalization <- FALSE
         v_gene_norm <- FALSE
-        message("Warning: No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.")
+        warning("No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.", call. = FALSE)
       } else {
         ref_vgenes <- as.character(refseqs$TRBV)
         refseqs <- as.character(refseqs$CDR3b)
@@ -262,7 +268,7 @@ deNovoTCRs <- function(convergence_group_tag,
       if(ncol(refseqs) > 1 && v_gene_norm == TRUE){
         message("Notification: Second column of reference database is considered as V-gene information.")
       } else if(v_gene_norm == TRUE){
-        message("Warning: Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.")
+        warning("Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.", call. = FALSE)
         v_gene_norm <- FALSE
       }
       if(ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
@@ -277,7 +283,7 @@ deNovoTCRs <- function(convergence_group_tag,
       if(nrow(refseqs) == 0){
         normalization <- FALSE
         v_gene_norm <- FALSE
-        message("Warning: No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.")
+        warning("No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.", call. = FALSE)
       } else {
         ref_vgenes <- as.character(refseqs$TRBV)
         refseqs <- as.character(refseqs$CDR3b)
@@ -289,8 +295,8 @@ deNovoTCRs <- function(convergence_group_tag,
       v_genes <- crg$TRBV
     } else if(v_gene_norm == TRUE){
       v_gene_norm <- FALSE
-      message("Warning: Without V-gene information of sample sequences normalization may be inaccurate.")
-    } else message("Warning: Without V-gene restriction normalization may be inaccurate.")
+      warning("Without V-gene information of sample sequences normalization may be inaccurate.", call. = FALSE)
+    } else warning("Without V-gene restriction normalization may be inaccurate.", call. = FALSE)
   }
 
   ### Initialization

@@ -213,15 +213,15 @@
 #' \doi{10.1038/s41587-020-0505-4}
 #'
 #' @examples
-#' \dontrun{
 #' utils::data("gliph_input_data")
+#' ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 #' res <- runGLIPH(
 #'   cdr3_sequences = gliph_input_data[seq_len(200), ],
 #'   method = "gliph2",
+#'   refdb_beta = ref_df,
 #'   sim_depth = 50,
 #'   n_cores = 1
 #' )
-#' }
 #'
 #' @import foreach
 #' @export

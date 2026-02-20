@@ -43,22 +43,26 @@ test_that("plotNetwork rejects cluster_min_size < 1", {
                "at least 1")
 })
 
-test_that("plotNetwork requires clustering output with clusters", {
+test_that("plotNetwork returns NULL for clustering output with no clusters", {
   mock_output <- list(
     cluster_list = NULL,
     cluster_properties = NULL,
     parameters = list(gliph_version = 1)
   )
-  expect_error(plotNetwork(clustering_output = mock_output), "does not contain")
+  expect_message(result <- plotNetwork(clustering_output = mock_output),
+                 "No clusters found")
+  expect_null(result)
 })
 
-test_that("plotNetwork rejects empty cluster_list", {
+test_that("plotNetwork returns NULL for empty cluster_list", {
   mock_output <- list(
     cluster_list = list(),
     cluster_properties = data.frame(),
     parameters = list(clustering_method = "GLIPH2.0")
   )
-  expect_error(plotNetwork(clustering_output = mock_output), "does not contain")
+  expect_message(result <- plotNetwork(clustering_output = mock_output),
+                 "No clusters found")
+  expect_null(result)
 })
 
 test_that("plotNetwork rejects non-character size_info", {

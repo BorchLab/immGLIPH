@@ -13,6 +13,9 @@
   verbose
 )
 }
+\value{
+A list with edge data and excluded sequence IDs.
+}
 \description{
 immApex-accelerated global cutoff via buildNetwork()
 }

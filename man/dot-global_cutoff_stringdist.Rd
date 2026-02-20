@@ -14,6 +14,9 @@
   verbose
 )
 }
+\value{
+A list with edge data and excluded sequence IDs.
+}
 \description{
 stringdist + foreach fallback for global cutoff
 }

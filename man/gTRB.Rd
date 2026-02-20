@@ -5,7 +5,7 @@
 \alias{gTRB}
 \title{Germline TCR-beta CDR3 fragments}
 \format{
-An object of class \code{list} of length 3.
+A list of 3 data.frames: gTRV, gTRD, and gTRJ.
 }
 \source{
 Lefranc, M.-P. IMGT, the international ImMunoGeneTics database.

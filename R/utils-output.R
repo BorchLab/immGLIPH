@@ -57,6 +57,7 @@
 #'
 #' @param parameters Named list of parameters
 #' @param result_folder Path to output folder
+#' @return NULL (invisibly). Called for side effect of writing file.
 #' @keywords internal
 .save_parameters <- function(parameters, result_folder) {
     paras <- data.frame(

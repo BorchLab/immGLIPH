@@ -27,6 +27,7 @@
 }
 
 #' Stop parallel backend
+#' @return NULL (invisibly). Called for side effect.
 #' @keywords internal
 .stop_parallel <- function() {
     doParallel::stopImplicitCluster()

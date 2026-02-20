@@ -81,21 +81,21 @@
 #' enrichment, clonal expansion enrichment, and common HLA enrichment).
 #'
 #' @examples
-#' \dontrun{
 #' utils::data("gliph_input_data")
+#' ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 #'
 #' res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200), ],
+#'                 refdb_beta = ref_df,
 #'                 sim_depth = 100,
 #'                 n_cores = 1)
 #'
 #' scoring_results <- clusterScoring(
 #'     cluster_list = res$cluster_list,
 #'     cdr3_sequences = gliph_input_data[seq_len(200), ],
-#'     refdb_beta = "human_v2.0_CD48",
+#'     refdb_beta = ref_df,
 #'     gliph_version = 1,
 #'     sim_depth = 100,
 #'     n_cores = 1)
-#' }
 #'
 #' @references Glanville, Jacob, et al.
 #' "Identifying specificity groups in the T cell receptor repertoire." Nature 547.7661 (2017): 94.
@@ -186,6 +186,12 @@ clusterScoring <- function(cluster_list,
     if(n_cores < 1) stop("n_cores must be at least 1")
 
     n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
+  }
+
+  ### Early return for empty cluster_list (after all validation)
+  if(length(cluster_list) == 0) {
+    message("No clusters to score.")
+    return(data.frame())
   }
 
   #################################################################

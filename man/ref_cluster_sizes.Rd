@@ -5,7 +5,7 @@
 \alias{ref_cluster_sizes}
 \title{Cluster size probabilities in naive reference repertoire}
 \format{
-An object of class \code{list} of length 2.
+A list with 2 elements: original and simulated.
 }
 \source{
 Glanville, J. et al. Identifying specificity groups in the T cell

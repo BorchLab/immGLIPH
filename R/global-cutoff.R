@@ -50,6 +50,7 @@
 }
 
 #' immApex-accelerated global cutoff via buildNetwork()
+#' @return A list with edge data and excluded sequence IDs.
 #' @keywords internal
 .global_cutoff_immapex <- function(seqs, motif_region, sequences,
                                    gccutoff, global_vgene, verbose) {
@@ -118,6 +119,7 @@
 }
 
 #' stringdist + foreach fallback for global cutoff
+#' @return A list with edge data and excluded sequence IDs.
 #' @keywords internal
 .global_cutoff_stringdist <- function(seqs, motif_region, sequences,
                                       gccutoff, global_vgene, no_cores,

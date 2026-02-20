@@ -27,7 +27,13 @@
 #'   \code{cdr3_length_frequencies}.
 #'
 #' @examples
-#' \dontrun{
+#' # Available reference database names
+#' c("human_v1.0_CD4", "human_v1.0_CD8", "human_v1.0_CD48",
+#'   "human_v2.0_CD4", "human_v2.0_CD8", "human_v2.0_CD48",
+#'   "mouse_v1.0_CD4", "mouse_v1.0_CD8", "mouse_v1.0_CD48",
+#'   "gliph_reference")
+#'
+#' \donttest{
 #' ref <- getGLIPHreference()
 #' names(ref)
 #' head(ref[["human_v2.0_CD48"]]$refseqs)
@@ -79,18 +85,16 @@ getGLIPHreference <- function(force_download = FALSE, verbose = TRUE) {
 #' @return The reference list.
 #' @keywords internal
 .get_reference_list <- function() {
-    # Session-level cache: store in package namespace environment
-    pkg_env <- parent.env(environment())
-    if (!is.null(pkg_env$.reference_list_cache)) {
-        return(pkg_env$.reference_list_cache)
+    if (!is.null(.ref_cache$data)) {
+        return(.ref_cache$data)
     }
     ref <- getGLIPHreference(verbose = TRUE)
-    pkg_env$.reference_list_cache <- ref
+    .ref_cache$data <- ref
     ref
 }
 
-# Session-level cache placeholder (populated on first use)
-.reference_list_cache <- NULL
+# Session-level cache environment (survives namespace locking)
+.ref_cache <- new.env(parent = emptyenv())
 
 #' Load and prepare reference database
 #'
