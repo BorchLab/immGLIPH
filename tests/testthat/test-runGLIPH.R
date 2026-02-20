@@ -84,6 +84,66 @@ test_that(".validate_params validates logical parameters", {
                "must be logical")
 })
 
+test_that(".validate_params rejects bad n_cores", {
+  expect_error(immGLIPH:::.validate_params(n_cores = 0), "n_cores")
+  expect_error(immGLIPH:::.validate_params(n_cores = -1), "n_cores")
+  expect_error(immGLIPH:::.validate_params(n_cores = "abc"), "n_cores")
+})
+
+test_that(".validate_params accepts NULL n_cores", {
+  result <- immGLIPH:::.validate_params(n_cores = NULL)
+  expect_null(result$n_cores)
+})
+
+test_that(".validate_params rejects bad motif_length", {
+  expect_error(immGLIPH:::.validate_params(motif_length = "abc"),
+               "motif_length")
+  expect_error(immGLIPH:::.validate_params(motif_length = 0),
+               "motif_length")
+  expect_error(immGLIPH:::.validate_params(motif_length = -1),
+               "motif_length")
+})
+
+test_that(".validate_params rounds motif_length", {
+  # Must also adjust lcminove to match motif_length length
+  result <- immGLIPH:::.validate_params(motif_length = c(2.7, 3.2),
+                                         lcminove = c(100, 10))
+  expect_equal(result$motif_length, c(3, 3))
+})
+
+test_that(".validate_params rejects bad cluster_min_size", {
+  expect_error(immGLIPH:::.validate_params(cluster_min_size = "abc"),
+               "cluster_min_size")
+  expect_error(immGLIPH:::.validate_params(cluster_min_size = 0),
+               "cluster_min_size")
+})
+
+test_that(".validate_params rejects bad boundary_size", {
+  expect_error(immGLIPH:::.validate_params(boundary_size = "abc"),
+               "boundary_size")
+  expect_error(immGLIPH:::.validate_params(boundary_size = -1),
+               "boundary_size")
+  # 0 is valid (>= 0)
+  result <- immGLIPH:::.validate_params(boundary_size = 0)
+  expect_equal(result$boundary_size, 0)
+})
+
+test_that(".validate_params validates ref_cluster_size", {
+  expect_error(immGLIPH:::.validate_params(ref_cluster_size = "invalid"),
+               "ref_cluster_size")
+  result <- immGLIPH:::.validate_params(ref_cluster_size = "original")
+  expect_equal(result$ref_cluster_size, "original")
+  result2 <- immGLIPH:::.validate_params(ref_cluster_size = "simulated")
+  expect_equal(result2$ref_cluster_size, "simulated")
+})
+
+test_that(".validate_params validates gccutoff", {
+  expect_error(immGLIPH:::.validate_params(gccutoff = -1), "gccutoff")
+  expect_error(immGLIPH:::.validate_params(gccutoff = "abc"), "gccutoff")
+  result <- immGLIPH:::.validate_params(gccutoff = NULL)
+  expect_null(result$gccutoff)
+})
+
 # ---- Input validation --------------------------------------------------------
 
 test_that("runGLIPH rejects invalid method", {
