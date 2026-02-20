@@ -163,3 +163,131 @@ test_that(".load_reference applies accept_CF filtering", {
   )
   expect_true(length(result_no_cf$refseqs) >= length(result_cf$refseqs))
 })
+
+test_that(".load_reference with global_vgene uses TRBV column", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    global_vgene = TRUE,
+    verbose = FALSE
+  )
+
+  expect_type(result, "list")
+  expect_true(length(result$refseqs) > 0)
+})
+
+test_that(".load_reference errors when global_vgene but no V-gene column", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    immGLIPH:::.load_reference(
+      refdb_beta = ref_df,
+      accept_CF = TRUE,
+      min_seq_length = 8,
+      global_vgene = TRUE,
+      verbose = FALSE
+    ),
+    "V-gene"
+  )
+})
+
+test_that(".load_reference filters invalid amino acid sequences", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "C123INVALID456F", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = FALSE,
+    min_seq_length = 8,
+    verbose = FALSE
+  )
+
+  # The invalid sequence should have been removed
+  expect_true(length(result$refseqs) == 2)
+})
+
+test_that(".load_reference errors when all sequences are below min_seq_length", {
+  ref_df <- data.frame(
+    CDR3b = c("CASF", "CASF"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    immGLIPH:::.load_reference(
+      refdb_beta = ref_df,
+      accept_CF = TRUE,
+      min_seq_length = 8,
+      verbose = FALSE
+    ),
+    "min_seq_length"
+  )
+})
+
+test_that(".load_reference with structboundaries FALSE", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    structboundaries = FALSE,
+    boundary_size = 3,
+    verbose = FALSE
+  )
+
+  # Without boundary trimming, motif region should equal full sequence
+  expect_equal(result$refseqs_motif, result$refseqs)
+})
+
+test_that(".load_reference uses second column as TRBV when not named", {
+  ref_df <- data.frame(
+    seq = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    vgene = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    global_vgene = TRUE,
+    verbose = FALSE
+  )
+
+  expect_true(length(result$refseqs) > 0)
+})
+
+test_that(".load_reference adds empty TRBV when single column provided", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    verbose = FALSE
+  )
+
+  expect_s3_class(result$refseqs_df, "data.frame")
+  expect_true("TRBV" %in% colnames(result$refseqs_df))
+})

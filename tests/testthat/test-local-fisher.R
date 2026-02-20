@@ -216,3 +216,132 @@ test_that(".local_fisher includes discontinuous motifs when enabled", {
   disc <- result$all_motifs[grep("\\.", result$all_motifs$motif), ]
   expect_true(nrow(disc) > 0)
 })
+
+# ---- immApex path -----------------------------------------------------------
+
+test_that(".local_fisher works via immApex when available", {
+  skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
+
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(1, 1),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_type(result, "list")
+  expect_s3_class(result$all_motifs, "data.frame")
+  expect_true(nrow(result$all_motifs) > 0)
+  expect_true(all(c("motif", "counts", "num_in_ref", "OvE", "p.value") %in%
+                    colnames(result$all_motifs)))
+})
+
+test_that(".local_fisher immApex path with discontinuous motifs", {
+  skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
+
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = TRUE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  disc <- result$all_motifs[grep("\\.", result$all_motifs$motif), ]
+  expect_true(nrow(disc) > 0)
+})
+
+# ---- Verbose messaging -------------------------------------------------------
+
+test_that(".local_fisher prints messages when verbose is TRUE", {
+  d <- .make_fisher_data()
+  expect_message(
+    immGLIPH:::.local_fisher(
+      motif_region          = d$motif_region,
+      refseqs_motif_region  = d$ref_motif_region,
+      seqs                  = d$sample_seqs,
+      refseqs               = d$ref_seqs,
+      sequences             = d$sequences,
+      motif_length          = c(2, 3),
+      kmer_mindepth         = 1,
+      lcminp                = 1.0,
+      lcminove              = c(1, 1),
+      discontinuous_motifs  = FALSE,
+      motif_distance_cutoff = 1,
+      no_cores              = 1,
+      verbose               = TRUE
+    ),
+    "motif"
+  )
+})
+
+# ---- Single lcminove value ---------------------------------------------------
+
+test_that(".local_fisher works with single lcminove value for multiple motif_lengths", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3, 4),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = 1,
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_type(result, "list")
+  expect_s3_class(result$all_motifs, "data.frame")
+})
+
+# ---- avgRef normalization ----------------------------------------------------
+
+test_that(".local_fisher avgRef is normalized to sample set size", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_true(is.numeric(result$all_motifs$avgRef))
+  expect_true(all(result$all_motifs$avgRef >= 0))
+})

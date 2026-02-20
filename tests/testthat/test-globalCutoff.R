@@ -224,3 +224,119 @@ test_that(".global_cutoff not_in_global_ids tracks isolated sequences", {
   expect_type(result$not_in_global_ids, "integer")
   expect_true(length(result$not_in_global_ids) > 0)
 })
+
+# ---- Verbose messaging -------------------------------------------------------
+
+test_that(".global_cutoff_stringdist prints messages when verbose is TRUE", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_message(
+    immGLIPH:::.global_cutoff_stringdist(
+      seqs = seqs, motif_region = motif_region, sequences = sequences,
+      gccutoff = 5, global_vgene = FALSE, no_cores = 1, verbose = TRUE
+    ),
+    "global"
+  )
+})
+
+test_that(".global_cutoff prints verbose dispatch message", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_message(
+    immGLIPH:::.global_cutoff(
+      seqs = seqs, motif_region = motif_region, sequences = sequences,
+      gccutoff = 5, global_vgene = FALSE, no_cores = 1, verbose = TRUE
+    ),
+    "global"
+  )
+})
+
+# ---- immApex path -----------------------------------------------------------
+
+test_that(".global_cutoff_immapex works when immApex available", {
+  skip_if_not_installed("immApex")
+  skip_if(!exists("buildNetwork", asNamespace("immApex")),
+          "immApex::buildNetwork not available")
+
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRQTNEKLFF",
+            "CASSLDRGEVFF", "CASSLDRGQVFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV5-1", "TRBV6-2", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.global_cutoff_immapex(
+    seqs = seqs, motif_region = motif_region, sequences = sequences,
+    gccutoff = 3, global_vgene = FALSE, verbose = FALSE
+  )
+
+  expect_type(result, "list")
+  expect_s3_class(result$edges, "data.frame")
+  expect_true(all(c("V1", "V2", "type") %in% colnames(result$edges)))
+})
+
+test_that(".global_cutoff_immapex with global_vgene restricts to same V-gene", {
+  skip_if_not_installed("immApex")
+  skip_if(!exists("buildNetwork", asNamespace("immApex")),
+          "immApex::buildNetwork not available")
+
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRQTNEKLFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+
+  sequences_same <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+  sequences_diff <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result_same <- immGLIPH:::.global_cutoff_immapex(
+    seqs = seqs, motif_region = motif_region, sequences = sequences_same,
+    gccutoff = 5, global_vgene = TRUE, verbose = FALSE
+  )
+  result_diff <- immGLIPH:::.global_cutoff_immapex(
+    seqs = seqs, motif_region = motif_region, sequences = sequences_diff,
+    gccutoff = 5, global_vgene = TRUE, verbose = FALSE
+  )
+
+  expect_true(nrow(result_same$edges) >= nrow(result_diff$edges))
+})
+
+# ---- High cutoff captures similar sequences --------------------------------
+
+test_that(".global_cutoff_stringdist finds edges with high cutoff", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRQTNEKLFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.global_cutoff_stringdist(
+    seqs = seqs, motif_region = motif_region, sequences = sequences,
+    gccutoff = 10, global_vgene = FALSE, no_cores = 1, verbose = FALSE
+  )
+
+  expect_true(nrow(result$edges) > 0)
+  expect_equal(result$edges$V1[1], seqs[1])
+  expect_equal(result$edges$V2[1], seqs[2])
+})
