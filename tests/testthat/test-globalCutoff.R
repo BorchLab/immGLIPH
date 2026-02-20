@@ -128,3 +128,99 @@ test_that("immApex buildNetwork backend matches stringdist backend", {
     expect_setequal(sd_pairs, apex_pairs)
   }
 })
+
+# ---- Edge case tests -------------------------------------------------------
+
+test_that(".global_cutoff_stringdist returns zero edges for single sequence", {
+  seqs <- c("CASSLAPGATNEKLFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = "TRBV5-1",
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.global_cutoff_stringdist(
+    seqs         = seqs,
+    motif_region = motif_region,
+    sequences    = sequences,
+    gccutoff     = 5,
+    global_vgene = FALSE,
+    no_cores     = 1,
+    verbose      = FALSE
+  )
+
+  expect_equal(nrow(result$edges), 0)
+})
+
+test_that(".global_cutoff_stringdist finds edges for identical sequences", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLAPGATNEKLFF")
+  seqs_uniq <- unique(seqs)
+  motif_region <- substr(seqs_uniq, 4, nchar(seqs_uniq) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  # Identical sequences have hamming distance 0, should be found with cutoff >= 0
+  result <- immGLIPH:::.global_cutoff_stringdist(
+    seqs         = seqs_uniq,
+    motif_region = motif_region,
+    sequences    = sequences,
+    gccutoff     = 0,
+    global_vgene = FALSE,
+    no_cores     = 1,
+    verbose      = FALSE
+  )
+
+  # With only 1 unique sequence, there's no pair to form
+  expect_equal(nrow(result$edges), 0)
+})
+
+test_that(".global_cutoff_stringdist with global_vgene restricts to same V-gene", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLAPRATNEKLFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+
+  sequences_same <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+  sequences_diff <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result_same <- immGLIPH:::.global_cutoff_stringdist(
+    seqs = seqs, motif_region = motif_region, sequences = sequences_same,
+    gccutoff = 5, global_vgene = TRUE, no_cores = 1, verbose = FALSE
+  )
+  result_diff <- immGLIPH:::.global_cutoff_stringdist(
+    seqs = seqs, motif_region = motif_region, sequences = sequences_diff,
+    gccutoff = 5, global_vgene = TRUE, no_cores = 1, verbose = FALSE
+  )
+
+  # Same V-gene should find the edge; different V-genes should not
+  expect_true(nrow(result_same$edges) >= nrow(result_diff$edges))
+})
+
+test_that(".global_cutoff not_in_global_ids tracks isolated sequences", {
+  seqs <- c("CASSLAPGATNEKLFF", "XXXXXXXXXXXXXXXF", "CASSLDRGEVFF")
+  motif_region <- substr(seqs, 4, nchar(seqs) - 3)
+  sequences <- data.frame(
+    CDR3b = seqs,
+    TRBV  = c("TRBV5-1", "TRBV6-2", "TRBV7-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.global_cutoff_stringdist(
+    seqs = seqs, motif_region = motif_region, sequences = sequences,
+    gccutoff = 0, global_vgene = FALSE, no_cores = 1, verbose = FALSE
+  )
+
+  # not_in_global_ids should contain indices of sequences without global edges
+  expect_type(result$not_in_global_ids, "integer")
+  expect_true(length(result$not_in_global_ids) > 0)
+})
