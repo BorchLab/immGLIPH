@@ -14,8 +14,15 @@ Description: An R implementation of the GLIPH and GLIPH2 algorithms for
     algorithm papers: Glanville et al. (2017) <doi:10.1038/nature22976>
     and Huang et al. (2020) <doi:10.1038/s41587-020-0505-4>.
 License: MIT + file LICENSE
+biocViews:
+    Software,
+    ImmunoOncology,
+    Clustering,
+    SingleCell,
+    Sequencing,
+    Visualization
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.5.0)
 Imports:
     stringdist,
     igraph,
