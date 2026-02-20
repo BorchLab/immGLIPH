@@ -44,16 +44,16 @@
 #' @return A `visNetwork` object containing the interactive network graph.
 #'
 #' @examples
-#' \dontrun{
 #' utils::data("gliph_input_data")
+#' ref_df <- gliph_input_data[, c("CDR3b", "TRBV")]
 #' res <- runGLIPH(cdr3_sequences = gliph_input_data[seq_len(200),],
 #'                 method = "gliph1",
+#'                 refdb_beta = ref_df,
 #'                 sim_depth = 100,
 #'                 n_cores = 1)
 #'
 #' plotNetwork(clustering_output = res,
 #'             n_cores = 1)
-#' }
 #'
 #' @import viridis foreach grDevices
 #' @export
@@ -134,8 +134,10 @@ plotNetwork <- function(clustering_output = NULL,
   # cluster_properties: contains cluster specific information like all scores
   parameters <- clustering_output$parameters
   cluster_list <- clustering_output$cluster_list
-  if(is.null(cluster_list)) stop("The specified clustering_output does not contain any clusters.")
-  if(length(cluster_list) == 0) stop("The specified clustering_output does not contain any clusters.")
+  if(is.null(cluster_list) || length(cluster_list) == 0) {
+    message("No clusters found in the clustering output.")
+    return(invisible(NULL))
+  }
   cluster_properties <- clustering_output$cluster_properties
 
   hold_ids <- which(as.numeric(cluster_properties$cluster_size) >= cluster_min_size)
@@ -539,7 +541,7 @@ plotNetwork <- function(clustering_output = NULL,
   }
   if(color_info == "color" && !(any(plotfunctions::isColor(cluster_data_frame[, color_info]) == FALSE))) stop("Column ", color_info, " determining node color has to contain only values that represent colors.")
 
-  color.scale = ""
+  color.scale <- ""
   if("color" %in% colnames(cluster_data_frame)){
     # Use the user specified colors
     vert.info$color <- cluster_data_frame$color[vert.info$id]
@@ -633,13 +635,13 @@ plotNetwork <- function(clustering_output = NULL,
   v.title <- vertexes
   v.color <- rep("gray", num.v)
   v.shadow <- rep(FALSE, num.v)
-  if ("size" %in% names(vertex.info)) v.size = as.numeric(vertex.info$size)
-  if ("label" %in% names(vertex.info)) v.label = as.character(vertex.info$label)
-  if ("group" %in% names(vertex.info)) v.group = as.character(vertex.info$group)
-  if ("shape" %in% names(vertex.info)) v.shape = as.character(vertex.info$shape)
-  if ("title" %in% names(vertex.info)) v.title = as.character(vertex.info$title)
-  if ("color" %in% names(vertex.info)) v.color = as.character(vertex.info$color)
-  if ("shadow" %in% names(vertex.info)) v.shadow = as.logical(vertex.info$shadow)
+  if ("size" %in% names(vertex.info)) v.size <- as.numeric(vertex.info$size)
+  if ("label" %in% names(vertex.info)) v.label <- as.character(vertex.info$label)
+  if ("group" %in% names(vertex.info)) v.group <- as.character(vertex.info$group)
+  if ("shape" %in% names(vertex.info)) v.shape <- as.character(vertex.info$shape)
+  if ("title" %in% names(vertex.info)) v.title <- as.character(vertex.info$title)
+  if ("color" %in% names(vertex.info)) v.color <- as.character(vertex.info$color)
+  if ("shadow" %in% names(vertex.info)) v.shadow <- as.logical(vertex.info$shadow)
   nodes <- data.frame(id = vertexes,
                             color = list(background = v.color, border = "black", highlight = "red"),
                             size=v.size,
@@ -661,15 +663,15 @@ plotNetwork <- function(clustering_output = NULL,
   e.title <- rep("",num.e)
   e.smooth <- rep(FALSE,num.e)
   e.shadow <- rep(FALSE,num.e)
-  if ("length" %in% names(edge.info)) e.length = as.numeric(edge.info$length)
-  if ("label" %in% names(edge.info)) e.label = as.character(edge.info$label)
-  if ("width" %in% names(edge.info)) e.width = as.numeric(edge.info$width)
-  if ("color" %in% names(edge.info)) e.color = as.character(edge.info$color)
-  if ("arrows" %in% names(edge.info)) e.arrows = as.character(edge.info$arrows)
-  if ("dashes" %in% names(edge.info)) e.dashes = as.logical(edge.info$dashes)
-  if ("title" %in% names(edge.info)) e.title = as.character(edge.info$title)
-  if ("smooth" %in% names(edge.info)) e.smooth = as.logical(edge.info$smooth)
-  if ("shadow" %in% names(edge.info)) e.shadow = as.logical(edge.info$shadow)
+  if ("length" %in% names(edge.info)) e.length <- as.numeric(edge.info$length)
+  if ("label" %in% names(edge.info)) e.label <- as.character(edge.info$label)
+  if ("width" %in% names(edge.info)) e.width <- as.numeric(edge.info$width)
+  if ("color" %in% names(edge.info)) e.color <- as.character(edge.info$color)
+  if ("arrows" %in% names(edge.info)) e.arrows <- as.character(edge.info$arrows)
+  if ("dashes" %in% names(edge.info)) e.dashes <- as.logical(edge.info$dashes)
+  if ("title" %in% names(edge.info)) e.title <- as.character(edge.info$title)
+  if ("smooth" %in% names(edge.info)) e.smooth <- as.logical(edge.info$smooth)
+  if ("shadow" %in% names(edge.info)) e.shadow <- as.logical(edge.info$shadow)
   edges <- data.frame(from = eds$from, to = eds$to,
                             length = e.length,
                             width = e.width,
