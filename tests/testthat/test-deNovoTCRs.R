@@ -343,3 +343,148 @@ test_that("deNovoTCRs with accept_sequences_with_C_F_start_end = FALSE", {
   expect_type(result, "list")
   expect_s3_class(result$de_novo_sequences, "data.frame")
 })
+
+# ---- num_tops truncation when exceeding available sequences ------------------
+
+test_that("deNovoTCRs truncates num_tops when exceeding available sequences", {
+  skip_on_cran()
+
+  cluster_members <- data.frame(
+    seq_ID  = 1:5,
+    CDR3b   = c("CASSLAPGATNEKLFF", "CASSLAPRATNEKLFF",
+                "CASSLAPGETQEKLFF", "CASSLAPQATNEKLFF",
+                "CASSLAPGAGNEKLFF"),
+    TRBV    = rep("TRBV5-1", 5),
+    stringsAsFactors = FALSE
+  )
+
+  mock_output <- list(
+    cluster_list = list("CRG-test" = cluster_members)
+  )
+
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  # Request far more top sequences than sims can produce
+  result <- deNovoTCRs(
+    convergence_group_tag = "CRG-test",
+    clustering_output = mock_output,
+    refdb_beta = ref_df,
+    sims = 10,
+    num_tops = 100000,
+    min_length = 10,
+    make_figure = FALSE,
+    n_cores = 1
+  )
+
+  expect_type(result, "list")
+  expect_s3_class(result$de_novo_sequences, "data.frame")
+  # num_tops should be capped at the actual number of unique sequences generated
+  expect_true(nrow(result$de_novo_sequences) <= 10)
+})
+
+# ---- refdb_beta validation: invalid string -----------------------------------
+
+test_that("deNovoTCRs rejects invalid refdb_beta string", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list("CRG-1" = data.frame(CDR3b = "CASSLAPGATNEKLFF"))),
+               refdb_beta = "invalid_reference_name"),
+    "data frame"
+  )
+})
+
+# ---- Multiple sims validation ------------------------------------------------
+
+test_that("deNovoTCRs rejects multiple sims values", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list()),
+               sims = c(100, 200)),
+    "single number"
+  )
+})
+
+# ---- Multiple num_tops validation --------------------------------------------
+
+test_that("deNovoTCRs rejects multiple num_tops values", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list()),
+               num_tops = c(10, 20)),
+    "single number"
+  )
+})
+
+# ---- Multiple min_length validation ------------------------------------------
+
+test_that("deNovoTCRs rejects multiple min_length values", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list()),
+               min_length = c(5, 10)),
+    "single number"
+  )
+})
+
+# ---- Multiple n_cores validation ---------------------------------------------
+
+test_that("deNovoTCRs rejects multiple n_cores values", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list()),
+               n_cores = c(1, 2)),
+    "single number"
+  )
+})
+
+# ---- n_cores < 1 validation -------------------------------------------------
+
+test_that("deNovoTCRs rejects n_cores less than 1", {
+  expect_error(
+    deNovoTCRs(convergence_group_tag = "CRG-1",
+               clustering_output = list(cluster_list = list()),
+               n_cores = 0),
+    "at least 1"
+  )
+})
+
+# ---- deNovoTCRs errors when all sequences below min_length ------------------
+
+test_that("deNovoTCRs errors when all cluster sequences are below min_length", {
+  skip_on_cran()
+
+  cluster_members <- data.frame(
+    seq_ID  = 1:2,
+    CDR3b   = c("CASSLAP", "CASSLD"),
+    TRBV    = rep("TRBV5-1", 2),
+    stringsAsFactors = FALSE
+  )
+
+  mock_output <- list(
+    cluster_list = list("CRG-test" = cluster_members)
+  )
+
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF"),
+    TRBV = c("TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    deNovoTCRs(
+      convergence_group_tag = "CRG-test",
+      clustering_output = mock_output,
+      refdb_beta = ref_df,
+      sims = 10,
+      num_tops = 5,
+      min_length = 20,
+      make_figure = FALSE,
+      n_cores = 1
+    ),
+    "min_length"
+  )
+})

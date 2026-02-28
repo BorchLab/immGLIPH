@@ -516,3 +516,152 @@ test_that("plotNetwork errors when no clusters meet cluster_min_size", {
     )
   }
 })
+
+# ---- plotNetwork with custom color_palette -----------------------------------
+
+test_that("plotNetwork works with custom color_palette", {
+  skip_on_cran()
+  skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
+
+  utils::data("gliph_input_data", package = "immGLIPH")
+  small_data <- gliph_input_data[seq_len(50), ]
+
+  set.seed(42)
+  extra_seqs <- vapply(seq_len(200), function(i) {
+    paste0("C", paste0(sample(LETTERS[c(1, 3:9, 11:14, 16:20, 23, 25)],
+                               sample(8:14, 1), replace = TRUE),
+                        collapse = ""), "F")
+  }, character(1))
+  ref_df <- data.frame(
+    CDR3b = extra_seqs,
+    TRBV = sample(c("TRBV5-1", "TRBV6-2", "TRBV7-2"), 200, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+  ref_df <- ref_df[!duplicated(ref_df$CDR3b), ]
+
+  res <- runGLIPH(
+    cdr3_sequences = small_data,
+    method = "gliph1",
+    refdb_beta = ref_df,
+    sim_depth = 10,
+    n_cores = 1,
+    verbose = FALSE
+  )
+
+  if (!is.null(res$cluster_properties) &&
+      any(as.numeric(res$cluster_properties$cluster_size) >= 2)) {
+    # Use grDevices heat.colors as custom palette
+    plot_obj <- plotNetwork(
+      clustering_output = res,
+      color_palette = grDevices::heat.colors,
+      cluster_min_size = 2,
+      n_cores = 1
+    )
+    expect_s3_class(plot_obj, "visNetwork")
+  }
+})
+
+# ---- plotNetwork loads from result_folder ------------------------------------
+
+test_that("plotNetwork loads from result_folder", {
+  skip_on_cran()
+  skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
+
+  utils::data("gliph_input_data", package = "immGLIPH")
+  small_data <- gliph_input_data[seq_len(50), ]
+
+  set.seed(42)
+  extra_seqs <- vapply(seq_len(200), function(i) {
+    paste0("C", paste0(sample(LETTERS[c(1, 3:9, 11:14, 16:20, 23, 25)],
+                               sample(8:14, 1), replace = TRUE),
+                        collapse = ""), "F")
+  }, character(1))
+  ref_df <- data.frame(
+    CDR3b = extra_seqs,
+    TRBV = sample(c("TRBV5-1", "TRBV6-2", "TRBV7-2"), 200, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+  ref_df <- ref_df[!duplicated(ref_df$CDR3b), ]
+
+  tmp_dir <- file.path(tempdir(), paste0("plotnet_folder_test_", Sys.getpid()))
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+
+  res <- runGLIPH(
+    cdr3_sequences = small_data,
+    method = "gliph1",
+    refdb_beta = ref_df,
+    result_folder = tmp_dir,
+    sim_depth = 10,
+    n_cores = 1,
+    verbose = FALSE
+  )
+
+  if (!is.null(res$cluster_properties) &&
+      any(as.numeric(res$cluster_properties$cluster_size) >= 2)) {
+    plot_obj <- plotNetwork(
+      result_folder = tmp_dir,
+      cluster_min_size = 2,
+      n_cores = 1
+    )
+    expect_s3_class(plot_obj, "visNetwork")
+  }
+})
+
+# ---- plotNetwork with edge color customization -------------------------------
+
+test_that("plotNetwork respects custom edge colors", {
+  skip_on_cran()
+  skip_if_not_installed("immApex")
+  skip_if(!exists("calculateMotif", asNamespace("immApex")),
+          "immApex::calculateMotif not available")
+
+  utils::data("gliph_input_data", package = "immGLIPH")
+  small_data <- gliph_input_data[seq_len(50), ]
+
+  set.seed(42)
+  extra_seqs <- vapply(seq_len(200), function(i) {
+    paste0("C", paste0(sample(LETTERS[c(1, 3:9, 11:14, 16:20, 23, 25)],
+                               sample(8:14, 1), replace = TRUE),
+                        collapse = ""), "F")
+  }, character(1))
+  ref_df <- data.frame(
+    CDR3b = extra_seqs,
+    TRBV = sample(c("TRBV5-1", "TRBV6-2", "TRBV7-2"), 200, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+  ref_df <- ref_df[!duplicated(ref_df$CDR3b), ]
+
+  res <- runGLIPH(
+    cdr3_sequences = small_data,
+    method = "gliph1",
+    refdb_beta = ref_df,
+    sim_depth = 10,
+    n_cores = 1,
+    verbose = FALSE
+  )
+
+  if (!is.null(res$cluster_properties) &&
+      any(as.numeric(res$cluster_properties$cluster_size) >= 2)) {
+    plot_obj <- plotNetwork(
+      clustering_output = res,
+      local_edge_color = "red",
+      global_edge_color = "blue",
+      cluster_min_size = 2,
+      n_cores = 1
+    )
+    expect_s3_class(plot_obj, "visNetwork")
+  }
+})
+
+# ---- plotNetwork n_cores validation ------------------------------------------
+
+test_that("plotNetwork rejects multiple n_cores values", {
+  expect_error(
+    plotNetwork(clustering_output = list(), n_cores = c(1, 2)),
+    "single number"
+  )
+})
