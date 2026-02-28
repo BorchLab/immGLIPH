@@ -668,3 +668,254 @@ test_that(".cluster_gliph2 generates save_cluster_list_df", {
     expect_true("tag" %in% colnames(result$save_cluster_list_df))
   }
 })
+
+# ---- .cluster_gliph2 verbose messaging ---------------------------------------
+
+test_that(".cluster_gliph2 prints message when verbose is TRUE", {
+  d <- .make_cluster_data()
+
+  local_res <- data.frame(
+    motif         = c("SL"),
+    start         = c(1),
+    stop          = c(2),
+    num_in_sample = c(3),
+    num_in_ref    = c(10),
+    num_fold      = c(5.0),
+    fisher.score  = c(0.001),
+    members       = paste(d$seqs[1:3], collapse = " "),
+    stringsAsFactors = FALSE
+  )
+
+  expect_message(
+    immGLIPH:::.cluster_gliph2(
+      local_res              = local_res,
+      global_res             = NULL,
+      sequences              = d$sequences,
+      local_similarities     = TRUE,
+      global_similarities    = FALSE,
+      global_vgene           = FALSE,
+      all_aa_interchangeable = TRUE,
+      structboundaries       = TRUE,
+      boundary_size          = 3,
+      motif_distance_cutoff  = 10,
+      cluster_min_size       = 1,
+      boost_local_significance = FALSE,
+      verbose                = TRUE
+    ),
+    "GLIPH2"
+  )
+})
+
+# ---- .cluster_gliph1 with patient.info = FALSE -------------------------------
+
+test_that(".cluster_gliph1 works without patient info", {
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF")
+  sequences <- data.frame(
+    seq_ID = seq_along(seqs),
+    CDR3b  = seqs,
+    TRBV   = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  clone_network <- data.frame(
+    V1   = "CASSLAPGATNEKLFF",
+    V2   = "CASSLDRGEVFF",
+    type = "local",
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.cluster_gliph1(
+    clone_network    = clone_network,
+    sequences        = sequences,
+    not_in_global_ids = integer(0),
+    seqs             = seqs,
+    vgene.info       = TRUE,
+    patient.info     = FALSE,
+    global_vgene     = FALSE,
+    public_tcrs      = TRUE,
+    cluster_min_size = 1,
+    verbose          = FALSE
+  )
+
+  expect_type(result, "list")
+  expect_true(!is.null(result$cluster_properties))
+})
+
+# ---- .cluster_gliph2 with global_vgene TRUE includes TRBV in tag ------------
+
+test_that(".cluster_gliph2 includes TRBV in tag when global_vgene is TRUE", {
+  d <- .make_cluster_data()
+
+  global_res <- data.frame(
+    cluster_tag    = c("struct_%_13"),
+    cluster_size   = c(3),
+    unique_CDR3b   = c(3),
+    num_in_ref     = c(5),
+    fisher.score   = c(0.001),
+    aa_at_position = c("L"),
+    TRBV           = c("TRBV5-1"),
+    CDR3b          = paste(d$seqs[c(1, 3, 5)], collapse = " "),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.cluster_gliph2(
+    local_res              = NULL,
+    global_res             = global_res,
+    sequences              = d$sequences,
+    local_similarities     = FALSE,
+    global_similarities    = TRUE,
+    global_vgene           = TRUE,
+    all_aa_interchangeable = TRUE,
+    structboundaries       = TRUE,
+    boundary_size          = 3,
+    motif_distance_cutoff  = 1,
+    cluster_min_size       = 1,
+    boost_local_significance = FALSE,
+    verbose                = FALSE
+  )
+
+  if (!is.null(result$merged_clusters)) {
+    expect_true(any(grepl("TRBV", result$merged_clusters$tag)))
+  }
+})
+
+# ---- .cluster_gliph2 handles infinite OvE ------------------------------------
+
+test_that(".cluster_gliph2 handles infinite OvE values", {
+  d <- .make_cluster_data()
+
+  local_res <- data.frame(
+    motif         = c("SL"),
+    start         = c(1),
+    stop          = c(2),
+    num_in_sample = c(3),
+    num_in_ref    = c(0),
+    num_fold      = c(Inf),
+    fisher.score  = c(0.001),
+    members       = paste(d$seqs[1:3], collapse = " "),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.cluster_gliph2(
+    local_res              = local_res,
+    global_res             = NULL,
+    sequences              = d$sequences,
+    local_similarities     = TRUE,
+    global_similarities    = FALSE,
+    global_vgene           = FALSE,
+    all_aa_interchangeable = TRUE,
+    structboundaries       = TRUE,
+    boundary_size          = 3,
+    motif_distance_cutoff  = 10,
+    cluster_min_size       = 1,
+    boost_local_significance = FALSE,
+    verbose                = FALSE
+  )
+
+  expect_type(result, "list")
+  if (!is.null(result$merged_clusters)) {
+    # Infinite OvE should be replaced with 0
+    expect_true(all(is.finite(as.numeric(result$merged_clusters$OvE))))
+  }
+})
+
+# ---- .cluster_gliph1 duplicate cluster naming --------------------------------
+
+test_that(".cluster_gliph1 handles duplicate cluster names with suffixes", {
+  # Create sequences where two separate components have the same first CDR3b
+  seqs <- c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSLAPGATNEKLFF",
+            "CASSYLAGGRNTLYF")
+  sequences <- data.frame(
+    seq_ID  = 1:4,
+    CDR3b   = seqs,
+    TRBV    = c("TRBV5-1", "TRBV6-2", "TRBV5-1", "TRBV7-2"),
+    patient = c("P1", "P1", "P2", "P2"),
+    stringsAsFactors = FALSE
+  )
+
+  clone_network <- data.frame(
+    V1   = c("CASSLAPGATNEKLFF", "CASSLAPGATNEKLFF"),
+    V2   = c("CASSLDRGEVFF", "CASSYLAGGRNTLYF"),
+    type = c("local", "local"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.cluster_gliph1(
+    clone_network    = clone_network,
+    sequences        = sequences,
+    not_in_global_ids = integer(0),
+    seqs             = unique(seqs),
+    vgene.info       = TRUE,
+    patient.info     = TRUE,
+    global_vgene     = FALSE,
+    public_tcrs      = TRUE,
+    cluster_min_size = 1,
+    verbose          = FALSE
+  )
+
+  expect_type(result, "list")
+  if (!is.null(result$cluster_properties)) {
+    # All tags should be unique
+    expect_equal(length(unique(result$cluster_properties$tag)),
+                 nrow(result$cluster_properties))
+  }
+})
+
+# ---- .cluster_gliph2 motif_distance_cutoff restricts edges -------------------
+
+test_that(".cluster_gliph2 motif_distance_cutoff = 0 eliminates positionally distant edges", {
+  d <- .make_cluster_data()
+
+  local_res <- data.frame(
+    motif         = c("SL"),
+    start         = c(1),
+    stop          = c(2),
+    num_in_sample = c(3),
+    num_in_ref    = c(10),
+    num_fold      = c(5.0),
+    fisher.score  = c(0.001),
+    members       = paste(d$seqs[1:3], collapse = " "),
+    stringsAsFactors = FALSE
+  )
+
+  result_strict <- immGLIPH:::.cluster_gliph2(
+    local_res              = local_res,
+    global_res             = NULL,
+    sequences              = d$sequences,
+    local_similarities     = TRUE,
+    global_similarities    = FALSE,
+    global_vgene           = FALSE,
+    all_aa_interchangeable = TRUE,
+    structboundaries       = TRUE,
+    boundary_size          = 3,
+    motif_distance_cutoff  = 0,
+    cluster_min_size       = 1,
+    boost_local_significance = FALSE,
+    verbose                = FALSE
+  )
+
+  result_lenient <- immGLIPH:::.cluster_gliph2(
+    local_res              = local_res,
+    global_res             = NULL,
+    sequences              = d$sequences,
+    local_similarities     = TRUE,
+    global_similarities    = FALSE,
+    global_vgene           = FALSE,
+    all_aa_interchangeable = TRUE,
+    structboundaries       = TRUE,
+    boundary_size          = 3,
+    motif_distance_cutoff  = 100,
+    cluster_min_size       = 1,
+    boost_local_significance = FALSE,
+    verbose                = FALSE
+  )
+
+  # Strict cutoff should have fewer or equal edges
+  n_strict <- if (!is.null(result_strict$clone_network)) {
+    sum(result_strict$clone_network$type == "local", na.rm = TRUE)
+  } else 0
+  n_lenient <- if (!is.null(result_lenient$clone_network)) {
+    sum(result_lenient$clone_network$type == "local", na.rm = TRUE)
+  } else 0
+  expect_true(n_strict <= n_lenient)
+})

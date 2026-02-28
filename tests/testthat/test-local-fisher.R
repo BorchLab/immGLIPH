@@ -345,3 +345,153 @@ test_that(".local_fisher avgRef is normalized to sample set size", {
   expect_true(is.numeric(result$all_motifs$avgRef))
   expect_true(all(result$all_motifs$avgRef >= 0))
 })
+
+# ---- topRef column -----------------------------------------------------------
+
+test_that(".local_fisher topRef column is numeric", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_true(is.numeric(result$all_motifs$topRef))
+})
+
+# ---- Empty selected_motifs when all below kmer_mindepth ----------------------
+
+test_that(".local_fisher returns empty selected_motifs when all below kmer_mindepth", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 9999,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_equal(nrow(result$selected_motifs), 0)
+  # all_motifs should still contain motifs found
+  expect_true(nrow(result$all_motifs) > 0)
+})
+
+# ---- Multiple motif lengths with matching lcminove vector --------------------
+
+test_that(".local_fisher correctly applies per-length lcminove thresholds", {
+  d <- .make_fisher_data()
+
+  # Very high threshold for length 2, very low for length 3
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(1e6, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  if (nrow(result$selected_motifs) > 0) {
+    # No 2-mer motifs should pass the high threshold
+    two_mers <- result$selected_motifs[nchar(result$selected_motifs$motif) == 2, ]
+    expect_equal(nrow(two_mers), 0)
+  }
+})
+
+# ---- motif length 4 ---------------------------------------------------------
+
+test_that(".local_fisher works with motif_length = 4", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = 4,
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = 0,
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_type(result, "list")
+  if (nrow(result$all_motifs) > 0) {
+    # All continuous motifs should be 4 characters
+    expect_true(all(nchar(result$all_motifs$motif) == 4))
+  }
+})
+
+# ---- counts column is always >= 1 in all_motifs -----------------------------
+
+test_that(".local_fisher all_motifs counts are positive", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_true(all(result$all_motifs$counts >= 1))
+})
+
+# ---- num_in_ref is non-negative in all_motifs --------------------------------
+
+test_that(".local_fisher num_in_ref is non-negative", {
+  d <- .make_fisher_data()
+  result <- immGLIPH:::.local_fisher(
+    motif_region          = d$motif_region,
+    refseqs_motif_region  = d$ref_motif_region,
+    seqs                  = d$sample_seqs,
+    refseqs               = d$ref_seqs,
+    sequences             = d$sequences,
+    motif_length          = c(2, 3),
+    kmer_mindepth         = 1,
+    lcminp                = 1.0,
+    lcminove              = c(0, 0),
+    discontinuous_motifs  = FALSE,
+    motif_distance_cutoff = 1,
+    no_cores              = 1,
+    verbose               = FALSE
+  )
+
+  expect_true(all(result$all_motifs$num_in_ref >= 0))
+})

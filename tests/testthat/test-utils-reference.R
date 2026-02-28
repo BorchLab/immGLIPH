@@ -291,3 +291,152 @@ test_that(".load_reference adds empty TRBV when single column provided", {
   expect_s3_class(result$refseqs_df, "data.frame")
   expect_true("TRBV" %in% colnames(result$refseqs_df))
 })
+
+# ---- .load_reference with custom boundary_size --------------------------------
+
+test_that(".load_reference with structboundaries=TRUE and custom boundary_size", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result_b3 <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    structboundaries = TRUE,
+    boundary_size = 3,
+    verbose = FALSE
+  )
+
+  result_b5 <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    structboundaries = TRUE,
+    boundary_size = 5,
+    verbose = FALSE
+  )
+
+  # Larger boundary should produce shorter motif regions
+  expect_true(all(nchar(result_b5$refseqs_motif) < nchar(result_b3$refseqs_motif)))
+})
+
+# ---- .prepare_motif_region with empty vector ---------------------------------
+
+test_that(".prepare_motif_region handles empty vector", {
+  result <- immGLIPH:::.prepare_motif_region(character(0),
+                                              structboundaries = TRUE,
+                                              boundary_size = 3)
+  expect_length(result, 0)
+})
+
+# ---- .prepare_motif_region with single character sequences -------------------
+
+test_that(".prepare_motif_region handles very short sequences", {
+  seqs <- c("CAF")
+  result <- immGLIPH:::.prepare_motif_region(seqs, structboundaries = TRUE,
+                                              boundary_size = 1)
+  expect_equal(result, "A")
+})
+
+# ---- .load_reference verbose messages ----------------------------------------
+
+test_that(".load_reference prints messages when verbose", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_message(
+    immGLIPH:::.load_reference(
+      refdb_beta = ref_df,
+      accept_CF = TRUE,
+      min_seq_length = 8,
+      verbose = TRUE
+    ),
+    "CDR3b"
+  )
+})
+
+# ---- .load_reference deduplicates sequences ----------------------------------
+
+test_that(".load_reference deduplicates reference sequences", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLAPGATNEKLFF", "CASSLDRGEVFF"),
+    TRBV = c("TRBV5-1", "TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    verbose = FALSE
+  )
+
+  expect_equal(length(result$refseqs), 2)
+})
+
+# ---- .load_reference errors on all invalid AA sequences ----------------------
+
+test_that(".load_reference errors when all sequences have invalid AAs", {
+  ref_df <- data.frame(
+    CDR3b = c("C123456789F", "C987654321F"),
+    TRBV = c("TRBV5-1", "TRBV6-2"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    immGLIPH:::.load_reference(
+      refdb_beta = ref_df,
+      accept_CF = FALSE,
+      min_seq_length = 8,
+      verbose = FALSE
+    ),
+    "valid amino acid"
+  )
+})
+
+# ---- .load_reference with vgene_stratify extracts V-genes --------------------
+
+test_that(".load_reference vgene_stratify returns matching length vectors", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    vgene_stratify = TRUE,
+    verbose = FALSE
+  )
+
+  expect_equal(length(result$ref_vgenes), length(result$refseqs))
+})
+
+# ---- .load_reference motif region matches refseqs length ---------------------
+
+test_that(".load_reference motif region has same length as refseqs", {
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  result <- immGLIPH:::.load_reference(
+    refdb_beta = ref_df,
+    accept_CF = TRUE,
+    min_seq_length = 8,
+    structboundaries = TRUE,
+    boundary_size = 3,
+    verbose = FALSE
+  )
+
+  expect_equal(length(result$refseqs_motif), length(result$refseqs))
+})
