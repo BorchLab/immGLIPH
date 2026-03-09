@@ -28,13 +28,6 @@
 ## USAGE:
 ##   Run from the package root directory:
 ##     Rscript data-raw/build_reference_list.R
-##
-##   The output is saved to data-raw/reference_list.RData.
-##   Upload to GitHub releases:
-##     gh release create reference_data \
-##       data-raw/reference_list.RData \
-##       --title "Reference data" \
-##       --notes "GLIPH reference repertoires (human v1.0, v2.0; mouse v1.0)"
 ## ------------------------------------------------------------------
 
 # --- Download and extract reference zip files into a temp directory --------
@@ -155,7 +148,3 @@ message("Saving reference_list.RData ...")
 save(reference_list, file = "data-raw/reference_list.RData", compress = "xz")
 message("Done. reference_list contains: ",
         paste(names(reference_list), collapse = ", "))
-message("\nTo upload to GitHub releases:")
-message('  gh release create reference_data data-raw/reference_list.RData \\')
-message('    --title "Reference data" \\')
-message('    --notes "GLIPH reference repertoires (human v1.0, v2.0; mouse v1.0)"')

@@ -99,7 +99,7 @@
 #'
 #' A named \code{list} of naive TCR repertoire reference databases used for
 #' motif enrichment testing and cluster scoring. The data is \strong{not}
-#' bundled with the package; it is downloaded on first use from GitHub releases
+#' bundled with the package; it is downloaded on first use from Zenodo
 #' and cached locally via \pkg{BiocFileCache} (see
 #' \code{\link{getGLIPHreference}}).
 #'

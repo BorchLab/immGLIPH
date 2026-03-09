@@ -1,3 +1,9 @@
+# immGLIPH 0.99.1
+
+* Moved reference repertoire data hosting from GitHub releases to Zenodo
+  (https://zenodo.org/records/18925758) per Bioconductor requirements.
+* Updated `getGLIPHreference()` to download from Zenodo.
+
 # immGLIPH 0.99.0
 
 * Initial Bioconductor submission

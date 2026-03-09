@@ -18,9 +18,9 @@ with \code{refseqs}, \code{vgene_frequencies}, and
 \code{cdr3_length_frequencies}.
 }
 \description{
-Downloads the reference repertoire data from GitHub releases on first use
-and caches locally via \pkg{BiocFileCache}. Subsequent calls load from the
-cache without re-downloading.
+Downloads the reference repertoire data from Zenodo on first use and caches
+locally via \pkg{BiocFileCache}. Subsequent calls load from the cache
+without re-downloading.
 }
 \details{
 The cached file contains a named \code{list} with entries for each built-in

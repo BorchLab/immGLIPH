@@ -35,7 +35,8 @@ devtools::install_github("BorchLab/immGLIPH")
 immGLIPH uses naive TCR repertoire reference databases for motif enrichment
 testing and cluster scoring. The reference data (~19 MB) is **not** bundled
 with the package to keep the install size small. Instead, it is downloaded
-automatically on first use and cached locally via
+automatically on first use from
+[Zenodo](https://zenodo.org/records/18925758) and cached locally via
 [BiocFileCache](https://bioconductor.org/packages/BiocFileCache/).
 
 ### Setup
@@ -88,6 +89,8 @@ processes them, and saves the resulting `reference_list.RData`:
 ```bash
 Rscript data-raw/build_reference_list.R
 ```
+
+The output file should then be uploaded to Zenodo (see `data-raw/build_reference_list.R` for details).
 
 ## Quick Start
 

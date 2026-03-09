@@ -11,9 +11,9 @@
 
 #' Get or download the immGLIPH reference list
 #'
-#' Downloads the reference repertoire data from GitHub releases on first use
-#' and caches locally via \pkg{BiocFileCache}. Subsequent calls load from the
-#' cache without re-downloading.
+#' Downloads the reference repertoire data from Zenodo on first use and caches
+#' locally via \pkg{BiocFileCache}. Subsequent calls load from the cache
+#' without re-downloading.
 #'
 #' The cached file contains a named \code{list} with entries for each built-in
 #' reference database (see \code{\link{.valid_reference_names}}).
@@ -52,8 +52,8 @@ getGLIPHreference <- function(force_download = FALSE, verbose = TRUE) {
 
     rname <- "immGLIPH_reference_list_v1"
     file_url <- paste0(
-        "https://github.com/BorchLab/immGLIPH/releases/download/",
-        "reference_data/reference_list.RData"
+        "https://zenodo.org/records/18925758/files/",
+        "reference_list.RData?download=1"
     )
 
     rid <- BiocFileCache::bfcquery(bfc, rname, "rname", exact = TRUE)$rid
