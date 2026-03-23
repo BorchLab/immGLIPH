@@ -143,6 +143,8 @@
 #'
 #' @format NULL. Data is downloaded on first use via
 #'   \code{\link{getGLIPHreference}}.
+#' @returns No return value. This documents the \code{reference_list} object
+#'   which is downloaded at runtime by \code{\link{getGLIPHreference}}.
 #' @name reference_list
 #' @keywords datasets
 NULL

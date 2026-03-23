@@ -1,3 +1,7 @@
+# immGLIPH 0.99.2
+
+* Fixing roxygen documentation issue creating warnings. 
+
 # immGLIPH 0.99.1
 
 * Moved reference repertoire data hosting from GitHub releases to Zenodo

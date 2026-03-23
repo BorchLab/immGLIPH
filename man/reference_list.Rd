@@ -17,6 +17,10 @@ screening. \emph{Nature Biotechnology} 38, 1194--1202 (2020).
 
 Raw data downloaded from \url{http://50.255.35.37:8080/tools}.
 }
+\value{
+No return value. This documents the \code{reference_list} object
+which is downloaded at runtime by \code{\link{getGLIPHreference}}.
+}
 \description{
 A named \code{list} of naive TCR repertoire reference databases used for
 motif enrichment testing and cluster scoring. The data is \strong{not}
