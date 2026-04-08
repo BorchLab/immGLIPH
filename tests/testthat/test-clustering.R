@@ -1,8 +1,5 @@
 # Tests for .cluster_gliph1() and .cluster_gliph2()
 
-# Register sequential backend for %dopar%
-foreach::registerDoSEQ()
-
 # ---- Helpers ----------------------------------------------------------------
 
 .make_cluster_data <- function() {
@@ -44,7 +41,8 @@ test_that(".cluster_gliph1 returns list with expected elements", {
     global_vgene    = FALSE,
     public_tcrs     = TRUE,
     cluster_min_size = 1,
-    verbose         = FALSE
+    verbose         = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -79,7 +77,8 @@ test_that(".cluster_gliph1 forms connected components correctly", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_s3_class(result$cluster_properties, "data.frame")
@@ -112,7 +111,8 @@ test_that(".cluster_gliph1 filters by cluster_min_size", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 3,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   if (!is.null(result$cluster_properties)) {
@@ -135,7 +135,8 @@ test_that(".cluster_gliph1 returns NULL for empty edge list", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 2,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_null(result$cluster_properties)
@@ -165,7 +166,8 @@ test_that(".cluster_gliph1 adds singletons from not_in_global_ids", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   # The clone_network should contain singleton rows
@@ -204,7 +206,8 @@ test_that(".cluster_gliph2 returns list with expected elements", {
     motif_distance_cutoff  = 1,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -242,7 +245,8 @@ test_that(".cluster_gliph2 clone_network has expected edge types", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   if (!is.null(result$clone_network)) {
@@ -283,7 +287,8 @@ test_that(".cluster_gliph2 cluster_min_size filters small clusters", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 5,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   # Cluster of size 2 should be eliminated by min_size = 5
@@ -310,7 +315,8 @@ test_that(".cluster_gliph2 handles no local and no global similarities", {
     motif_distance_cutoff  = 1,
     cluster_min_size       = 2,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_null(result$merged_clusters)
@@ -347,7 +353,8 @@ test_that(".cluster_gliph2 handles global results only", {
     motif_distance_cutoff  = 1,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -384,7 +391,8 @@ test_that(".cluster_gliph2 with global_vgene FALSE for global clusters", {
     motif_distance_cutoff  = 1,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -436,7 +444,8 @@ test_that(".cluster_gliph2 merges local and global clusters", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -478,7 +487,8 @@ test_that(".cluster_gliph2 applies BLOSUM62 filtering when all_aa_interchangeabl
     motif_distance_cutoff  = 1,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -509,7 +519,8 @@ test_that(".cluster_gliph1 restricts edges to same donor when public_tcrs is FAL
     global_vgene     = FALSE,
     public_tcrs      = FALSE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -537,7 +548,8 @@ test_that(".cluster_gliph1 filters global edges by V-gene when global_vgene is T
     global_vgene     = TRUE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -566,7 +578,8 @@ test_that(".cluster_gliph1 prints message when verbose is TRUE", {
       global_vgene     = FALSE,
       public_tcrs      = TRUE,
       cluster_min_size = 1,
-      verbose          = TRUE
+      verbose          = TRUE,
+      BPPARAM          = BiocParallel::SerialParam()
     ),
     "GLIPH1"
   )
@@ -587,7 +600,8 @@ test_that(".cluster_gliph1 creates singleton network from NULL clone_network", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_true(!is.null(result$clone_network))
@@ -624,7 +638,8 @@ test_that(".cluster_gliph2 works with structboundaries FALSE", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -660,7 +675,8 @@ test_that(".cluster_gliph2 generates save_cluster_list_df", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   if (!is.null(result$merged_clusters) && length(result$cluster_list) > 0) {
@@ -700,7 +716,8 @@ test_that(".cluster_gliph2 prints message when verbose is TRUE", {
       motif_distance_cutoff  = 10,
       cluster_min_size       = 1,
       boost_local_significance = FALSE,
-      verbose                = TRUE
+      verbose                = TRUE,
+      BPPARAM          = BiocParallel::SerialParam()
     ),
     "GLIPH2"
   )
@@ -734,7 +751,8 @@ test_that(".cluster_gliph1 works without patient info", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -771,7 +789,8 @@ test_that(".cluster_gliph2 includes TRBV in tag when global_vgene is TRUE", {
     motif_distance_cutoff  = 1,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   if (!is.null(result$merged_clusters)) {
@@ -809,7 +828,8 @@ test_that(".cluster_gliph2 handles infinite OvE values", {
     motif_distance_cutoff  = 10,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -850,7 +870,8 @@ test_that(".cluster_gliph1 handles duplicate cluster names with suffixes", {
     global_vgene     = FALSE,
     public_tcrs      = TRUE,
     cluster_min_size = 1,
-    verbose          = FALSE
+    verbose          = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   expect_type(result, "list")
@@ -891,7 +912,8 @@ test_that(".cluster_gliph2 motif_distance_cutoff = 0 eliminates positionally dis
     motif_distance_cutoff  = 0,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   result_lenient <- immGLIPH:::.cluster_gliph2(
@@ -907,7 +929,8 @@ test_that(".cluster_gliph2 motif_distance_cutoff = 0 eliminates positionally dis
     motif_distance_cutoff  = 100,
     cluster_min_size       = 1,
     boost_local_significance = FALSE,
-    verbose                = FALSE
+    verbose                = FALSE,
+    BPPARAM          = BiocParallel::SerialParam()
   )
 
   # Strict cutoff should have fewer or equal edges

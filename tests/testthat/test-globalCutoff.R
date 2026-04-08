@@ -1,8 +1,5 @@
 # Tests for .global_cutoff() and related functions
 
-# Register a sequential backend for internal functions that use %dopar%
-foreach::registerDoSEQ()
-
 # ---- .global_cutoff_stringdist -----------------------------------------------
 
 test_that(".global_cutoff_stringdist returns correct structure", {
@@ -21,7 +18,7 @@ test_that(".global_cutoff_stringdist returns correct structure", {
     sequences    = sequences,
     gccutoff     = 5,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -50,7 +47,7 @@ test_that(".global_cutoff_stringdist returns empty for zero cutoff on different 
     sequences    = sequences,
     gccutoff     = 0,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -75,7 +72,7 @@ test_that(".global_cutoff dispatches correctly", {
     sequences    = sequences,
     gccutoff     = 5,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -105,7 +102,7 @@ test_that("immApex buildNetwork backend matches stringdist backend", {
     sequences    = sequences,
     gccutoff     = 3,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -146,7 +143,7 @@ test_that(".global_cutoff_stringdist returns zero edges for single sequence", {
     sequences    = sequences,
     gccutoff     = 5,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -170,7 +167,7 @@ test_that(".global_cutoff_stringdist finds edges for identical sequences", {
     sequences    = sequences,
     gccutoff     = 0,
     global_vgene = FALSE,
-    no_cores     = 1,
+    BPPARAM      = BiocParallel::SerialParam(),
     verbose      = FALSE
   )
 
@@ -195,11 +192,11 @@ test_that(".global_cutoff_stringdist with global_vgene restricts to same V-gene"
 
   result_same <- immGLIPH:::.global_cutoff_stringdist(
     seqs = seqs, motif_region = motif_region, sequences = sequences_same,
-    gccutoff = 5, global_vgene = TRUE, no_cores = 1, verbose = FALSE
+    gccutoff = 5, global_vgene = TRUE, BPPARAM = BiocParallel::SerialParam(), verbose = FALSE
   )
   result_diff <- immGLIPH:::.global_cutoff_stringdist(
     seqs = seqs, motif_region = motif_region, sequences = sequences_diff,
-    gccutoff = 5, global_vgene = TRUE, no_cores = 1, verbose = FALSE
+    gccutoff = 5, global_vgene = TRUE, BPPARAM = BiocParallel::SerialParam(), verbose = FALSE
   )
 
   # Same V-gene should find the edge; different V-genes should not
@@ -217,7 +214,7 @@ test_that(".global_cutoff not_in_global_ids tracks isolated sequences", {
 
   result <- immGLIPH:::.global_cutoff_stringdist(
     seqs = seqs, motif_region = motif_region, sequences = sequences,
-    gccutoff = 0, global_vgene = FALSE, no_cores = 1, verbose = FALSE
+    gccutoff = 0, global_vgene = FALSE, BPPARAM = BiocParallel::SerialParam(), verbose = FALSE
   )
 
   # not_in_global_ids should contain indices of sequences without global edges
@@ -239,7 +236,7 @@ test_that(".global_cutoff_stringdist prints messages when verbose is TRUE", {
   expect_message(
     immGLIPH:::.global_cutoff_stringdist(
       seqs = seqs, motif_region = motif_region, sequences = sequences,
-      gccutoff = 5, global_vgene = FALSE, no_cores = 1, verbose = TRUE
+      gccutoff = 5, global_vgene = FALSE, BPPARAM = BiocParallel::SerialParam(), verbose = TRUE
     ),
     "global"
   )
@@ -257,7 +254,7 @@ test_that(".global_cutoff prints verbose dispatch message", {
   expect_message(
     immGLIPH:::.global_cutoff(
       seqs = seqs, motif_region = motif_region, sequences = sequences,
-      gccutoff = 5, global_vgene = FALSE, no_cores = 1, verbose = TRUE
+      gccutoff = 5, global_vgene = FALSE, BPPARAM = BiocParallel::SerialParam(), verbose = TRUE
     ),
     "global"
   )
@@ -333,7 +330,7 @@ test_that(".global_cutoff_stringdist finds edges with high cutoff", {
 
   result <- immGLIPH:::.global_cutoff_stringdist(
     seqs = seqs, motif_region = motif_region, sequences = sequences,
-    gccutoff = 10, global_vgene = FALSE, no_cores = 1, verbose = FALSE
+    gccutoff = 10, global_vgene = FALSE, BPPARAM = BiocParallel::SerialParam(), verbose = FALSE
   )
 
   expect_true(nrow(result$edges) > 0)
