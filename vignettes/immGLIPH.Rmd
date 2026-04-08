@@ -19,6 +19,7 @@ vignette: >
 knitr::opts_chunk$set(
   echo = TRUE,
   message = FALSE,
+
   warning = FALSE,
   fig.width = 7,
   fig.height = 5
@@ -51,10 +52,10 @@ the original publications:**
 
 ## Installation
 
-immGLIPH can be installed from GitHub:
+immGLIPH can be installed from Bioconductor:
 
 ```{r eval=FALSE}
-devtools::install_github("BorchLab/immGLIPH")
+BiocManager::install("immGLIPH")
 ```
 
 The reference repertoire data (~19 MB) is downloaded automatically the first
@@ -74,11 +75,11 @@ library(immGLIPH)
 ## Integration with the scRepertoire Ecosystem
 
 immGLIPH integrates with the
-[scRepertoire](https://github.com/BorchLab/scRepertoire) ecosystem through
-[immApex](https://github.com/BorchLab/immApex). This means `runGLIPH()` can
-directly accept:
+[scRepertoire](https://bioconductor.org/packages/scRepertoire/) ecosystem
+through [immApex](https://bioconductor.org/packages/immApex/). Both
+scRepertoire and immApex are Bioconductor packages and can be installed via
+`BiocManager::install()`. This means `runGLIPH()` can directly accept:
 
-- **Seurat** objects with TCR information
 - **SingleCellExperiment** objects with TCR information
 - **combineTCR()** output lists from scRepertoire
 - Standard data frames or character vectors
@@ -127,23 +128,24 @@ library(scRepertoire)
 # After processing with cellranger/etc, combine contigs
 combined <- combineTCR(
   contig_list,
-  samples = c("P1", "P2"),
-  cells = "T-AB"
+  samples = c("P1", "P2")
 )
 
 # Pass scRepertoire output directly to runGLIPH
 results <- runGLIPH(combined, method = "gliph2")
 ```
 
-For **Seurat** or **SingleCellExperiment** objects that already contain TCR
-metadata (e.g., added via `scRepertoire::combineExpression()`), immGLIPH
-extracts the receptor data automatically using `immApex::getIR()`:
+For **SingleCellExperiment** objects that already contain TCR metadata (e.g.,
+added via `scRepertoire::combineExpression()`), immGLIPH extracts the receptor
+data automatically using `immApex::getIR()`. Here is an example using the
+bundled `gliph_sce` dataset:
 
 ```{r eval=FALSE}
-library(Seurat)
+library(SingleCellExperiment)
+data("gliph_sce")
 
-# Seurat object with TCR info in metadata
-results <- runGLIPH(seurat_obj, method = "gliph2", chains = "TRB")
+# SingleCellExperiment object with TCR info in colData
+results <- runGLIPH(gliph_sce, method = "gliph2", chains = "TRB")
 ```
 
 # The `runGLIPH()` Function
@@ -152,7 +154,7 @@ results <- runGLIPH(seurat_obj, method = "gliph2", chains = "TRB")
 
 | Argument | Default | Description |
 |:---------|:--------|:------------|
-| `cdr3_sequences` | -- | Input data (data frame, vector, Seurat, SCE, or list) |
+| `cdr3_sequences` | -- | Input data (data frame, vector, SCE, or list) |
 | `method` | `"gliph2"` | Algorithm preset: `"gliph1"`, `"gliph2"`, or `"custom"` |
 | `sim_depth` | 1000 | Simulation depth (higher = more reproducible, slower) |
 | `n_cores` | 1 | Number of parallel cores |
@@ -428,17 +430,19 @@ data):
 
 ## Example
 
-```{r eval=FALSE}
-# Re-score with GLIPH2 formula and higher simulation depth
-rescored <- clusterScoring(
-  cluster_list   = res_gliph1$cluster_list,
-  cdr3_sequences = gliph_input_data[seq_len(200), ],
-  refdb_beta     = "human_v2.0_CD48",
-  gliph_version  = 2,
-  sim_depth      = 500,
-  n_cores        = 1
-)
-head(rescored)
+```{r}
+# Re-score with GLIPH2 formula
+if (length(res_gliph1$cluster_list) > 0) {
+  rescored <- clusterScoring(
+    cluster_list   = res_gliph1$cluster_list,
+    cdr3_sequences = gliph_input_data[seq_len(200), ],
+    refdb_beta     = ref_df,
+    gliph_version  = 2,
+    sim_depth      = 100,
+    n_cores        = 1
+  )
+  head(rescored)
+}
 ```
 
 # De Novo TCR Generation with `deNovoTCRs()`
@@ -462,22 +466,25 @@ characteristics.
 
 ## Example
 
-```{r eval=FALSE}
-# Generate de novo TCRs for the top convergence group
-de_novo <- deNovoTCRs(
-  convergence_group_tag = res_gliph1$cluster_properties$tag[1],
-  clustering_output     = res_gliph1,
-  sims                  = 10000,
-  num_tops              = 100,
-  make_figure           = TRUE,
-  n_cores               = 1
-)
+```{r}
+# Generate de novo TCRs for the first convergence group (if any found)
+if (length(res_gliph1$cluster_list) > 0) {
+  de_novo <- deNovoTCRs(
+    convergence_group_tag = names(res_gliph1$cluster_list)[1],
+    clustering_output     = res_gliph1,
+    refdb_beta            = ref_df,
+    sims                  = 10000,
+    num_tops              = 100,
+    make_figure           = FALSE,
+    n_cores               = 1
+  )
 
-# Top predicted sequences
-head(de_novo$de_novo_sequences)
+  # Top predicted sequences
+  head(de_novo$de_novo_sequences)
 
-# Positional weight matrix used for generation
-head(de_novo$PWM_Scoring)
+  # Positional weight matrix used for generation
+  head(de_novo$PWM_Scoring)
+}
 ```
 
 # Network Visualization with `plotNetwork()`
@@ -499,24 +506,16 @@ the convergence groups using the visNetwork package.
 
 ## Example
 
-```{r eval=FALSE}
-plotNetwork(
-  clustering_output = res_gliph2,
-  color_info        = "total.score",
-  cluster_min_size  = 3,
-  n_cores           = 1
-)
-```
-
-You can also color nodes by donor/patient:
-
-```{r eval=FALSE}
-plotNetwork(
-  clustering_output = res_gliph2,
-  color_info        = "patient",
-  cluster_min_size  = 3,
-  n_cores           = 1
-)
+```{r}
+if (!is.null(res_gliph1$cluster_properties) &&
+    nrow(res_gliph1$cluster_properties) > 0) {
+  plotNetwork(
+    clustering_output = res_gliph1,
+    color_info        = "total.score",
+    cluster_min_size  = 2,
+    n_cores           = 1
+  )
+}
 ```
 
 # Loading Saved Results with `loadGLIPH()`
@@ -553,9 +552,9 @@ When `result_folder` is specified, `runGLIPH()` writes several output files:
 
 ## Accelerated Computation with immApex
 
-When [immApex](https://github.com/BorchLab/immApex) is installed, immGLIPH
-automatically uses its C++-accelerated backends for two computationally
-intensive steps:
+When [immApex](https://bioconductor.org/packages/immApex/) is installed,
+immGLIPH automatically uses its C++-accelerated backends for two
+computationally intensive steps:
 
 1. **Motif enumeration** (`findMotifs()`): Uses `immApex::calculateMotif()`
    with OpenMP multithreading instead of the pure-R `stringdist::qgrams()`
@@ -563,15 +562,14 @@ intensive steps:
 
 2. **Global Hamming distance network** (GLIPH1 method): Uses
    `immApex::buildNetwork()` to compute pairwise distances in a single C++
-   call, replacing the `foreach`-based parallel loop over
-   `stringdist::stringdist()`.
+   call, replacing the parallel loop over `stringdist::stringdist()`.
 
 If immApex is not installed, immGLIPH falls back to the original pure-R
 implementations transparently---no code changes are needed.
 
 ```{r eval=FALSE}
 # Install immApex for performance acceleration
-devtools::install_github("BorchLab/immApex")
+BiocManager::install("BorchLab/immApex")
 ```
 
 # Tips and Best Practices
@@ -589,7 +587,7 @@ devtools::install_github("BorchLab/immApex")
    `sim_depth >= 1000`. For exploratory analysis, `sim_depth = 100` is faster.
 
 5. **Parallelization**: For large datasets (>5,000 sequences), set
-   `n_cores > 1` to use parallel processing.
+   `n_cores > 1` to use parallel processing via BiocParallel.
 
 6. **Install immApex**: For best performance, install immApex to enable
    C++-accelerated motif enumeration and network construction (see
