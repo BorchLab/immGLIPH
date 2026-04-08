@@ -223,7 +223,6 @@
 #'   n_cores = 1
 #' )
 #'
-#' @import foreach
 #' @export
 runGLIPH <- function(cdr3_sequences,
                      method = c("gliph2", "gliph1", "custom"),
@@ -384,7 +383,7 @@ runGLIPH <- function(cdr3_sequences,
   }
 
   ## ---- Set up parallel ----
-  no_cores <- .setup_parallel(n_cores)
+  BPPARAM <- .setup_parallel(n_cores)
 
   ## ================================================================
   ## Part 1: Local similarities
@@ -453,14 +452,14 @@ runGLIPH <- function(cdr3_sequences,
         discontinuous_motifs      = discontinuous_motifs,
         cdr3_len_stratify         = cdr3_len_stratify,
         vgene_stratify            = vgene_stratify,
-        no_cores                  = no_cores,
         verbose                   = verbose,
         motif_lengths_list        = motif_lengths_list,
         ref_motif_lengths_id_list = ref_motif_lengths_id_list,
         motif_region_vgenes_list  = motif_region_vgenes_list,
         ref_motif_vgenes_id_list  = ref_motif_vgenes_id_list,
         lengths_vgenes_list       = lengths_vgenes_list,
-        ref_lengths_vgenes_list   = ref_lengths_vgenes_list
+        ref_lengths_vgenes_list   = ref_lengths_vgenes_list,
+        BPPARAM                   = BPPARAM
       )
 
       sample_log      <- rrs_result$sample_log
@@ -480,8 +479,8 @@ runGLIPH <- function(cdr3_sequences,
         lcminove               = lcminove,
         discontinuous_motifs   = discontinuous_motifs,
         motif_distance_cutoff  = motif_distance_cutoff,
-        no_cores               = no_cores,
-        verbose                = verbose
+        verbose                = verbose,
+        BPPARAM                = BPPARAM
       )
 
       selected_motifs <- fisher_result$selected_motifs
@@ -490,30 +489,30 @@ runGLIPH <- function(cdr3_sequences,
 
     ## Build local clone network from selected motifs
     if (!is.null(selected_motifs) && nrow(selected_motifs) > 0) {
-      i <- NULL
-      local_clone_network <- foreach::foreach(
-        i = seq_len(nrow(selected_motifs)),
-        .combine = rbind
-      ) %dopar% {
-        all_ids <- grep(
-          pattern = selected_motifs$motif[i],
-          x       = all_motif_region,
-          value   = FALSE
-        )
-        if (length(all_ids) >= 2) {
-          combn_ids <- t(utils::combn(all_ids, m = 2))
-        } else {
-          combn_ids <- t(utils::combn(rep(1, 2), m = 2))
-        }
-        temp_df <- data.frame(
-          V1   = combn_ids[, 1],
-          V2   = combn_ids[, 2],
-          type = rep("local", nrow(combn_ids)),
-          tag  = rep(selected_motifs$motif[i], nrow(combn_ids)),
-          stringsAsFactors = FALSE
-        )
-        temp_df
-      }
+      local_net_parts <- BiocParallel::bplapply(
+        seq_len(nrow(selected_motifs)),
+        function(i) {
+          all_ids <- grep(
+            pattern = selected_motifs$motif[i],
+            x       = all_motif_region,
+            value   = FALSE
+          )
+          if (length(all_ids) >= 2) {
+            combn_ids <- t(utils::combn(all_ids, m = 2))
+          } else {
+            combn_ids <- t(utils::combn(rep(1, 2), m = 2))
+          }
+          data.frame(
+            V1   = combn_ids[, 1],
+            V2   = combn_ids[, 2],
+            type = rep("local", nrow(combn_ids)),
+            tag  = rep(selected_motifs$motif[i], nrow(combn_ids)),
+            stringsAsFactors = FALSE
+          )
+        },
+        BPPARAM = BPPARAM
+      )
+      local_clone_network <- do.call(rbind, local_net_parts)
 
       ## Apply motif distance cutoff
       if (!is.null(local_clone_network) && nrow(local_clone_network) > 0) {
@@ -563,8 +562,8 @@ runGLIPH <- function(cdr3_sequences,
         sequences    = sequences,
         gccutoff     = gccutoff,
         global_vgene = global_vgene,
-        no_cores     = no_cores,
-        verbose      = verbose
+        verbose      = verbose,
+        BPPARAM      = BPPARAM
       )
 
       global_clone_network <- cutoff_result$edges
@@ -585,8 +584,8 @@ runGLIPH <- function(cdr3_sequences,
         boundary_size           = boundary_size,
         global_vgene            = global_vgene,
         all_aa_interchangeable  = all_aa_interchangeable,
-        no_cores                = no_cores,
-        verbose                 = verbose
+        verbose                 = verbose,
+        BPPARAM                 = BPPARAM
       )
 
       global_res <- fisher_global_result$cluster_list
@@ -640,7 +639,8 @@ runGLIPH <- function(cdr3_sequences,
       global_vgene      = global_vgene,
       public_tcrs       = public_tcrs,
       cluster_min_size  = cluster_min_size,
-      verbose           = verbose
+      verbose           = verbose,
+      BPPARAM           = BPPARAM
     )
 
     cluster_properties   <- gliph1_result$cluster_properties
@@ -716,7 +716,8 @@ runGLIPH <- function(cdr3_sequences,
       motif_distance_cutoff    = motif_distance_cutoff,
       cluster_min_size         = cluster_min_size,
       boost_local_significance = boost_local_significance,
-      verbose                  = verbose
+      verbose                  = verbose,
+      BPPARAM                  = BPPARAM
     )
 
     cluster_properties   <- gliph2_result$merged_clusters
@@ -754,9 +755,6 @@ runGLIPH <- function(cdr3_sequences,
       cluster_properties <- cluster_properties[, c(other_cols, members_col)]
     }
   }
-
-  ## ---- Stop parallel ----
-  .stop_parallel()
 
   ## ================================================================
   ## Save results

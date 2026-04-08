@@ -26,7 +26,8 @@
 #'   CDR3 length distribution.
 #' @param vgene_stratify Logical. Whether to stratify random subsamples by
 #'   V-gene usage distribution.
-#' @param no_cores Integer. Number of cores for parallel execution.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object
+#'   controlling parallel execution (default: \code{BiocParallel::bpparam()}).
 #' @param verbose Logical. If \code{TRUE}, emit progress messages.
 #' @param motif_lengths_list List. Pre-computed CDR3 length counts from the
 #'   sample.
@@ -52,7 +53,6 @@
 #'       \code{selected_motifs} but for every motif found.}
 #'   }
 #'
-#' @import foreach
 #' @keywords internal
 .local_rrs <- function(motif_region,
                        refseqs_motif_region,
@@ -66,7 +66,7 @@
                        discontinuous_motifs,
                        cdr3_len_stratify,
                        vgene_stratify,
-                       no_cores,
+                       BPPARAM,
                        verbose,
                        motif_lengths_list,
                        ref_motif_lengths_id_list,
@@ -86,7 +86,7 @@
   ## ---- Step 2: Repeated random sampling from the reference DB -----------
   if (verbose) message("Running ", sim_depth, " random sampling iterations.")
 
-  res <- foreach::foreach(i = seq_len(sim_depth), .inorder = FALSE) %dopar% {
+  res <- BiocParallel::bplapply(seq_len(sim_depth), function(i) {
     motif_sample <- getRandomSubsample(
       cdr3_len_stratify        = cdr3_len_stratify,
       vgene_stratify           = vgene_stratify,
@@ -109,7 +109,7 @@
     sim <- merge(discovery, sim, by = "motif", all.x = TRUE)
     sim$V1.y[is.na(sim$V1.y)] <- 0
     sim$V1.y
-  }
+  }, BPPARAM = BPPARAM)
 
   ## ---- Step 3: Build sample log -----------------------------------------
   if (verbose) message("Building sample log.")

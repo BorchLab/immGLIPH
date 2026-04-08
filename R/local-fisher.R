@@ -27,7 +27,8 @@
 #' @param motif_distance_cutoff Numeric. Maximum positional distance for motifs
 #'   to be grouped together. Not used directly in this function but kept for
 #'   interface consistency.
-#' @param no_cores Numeric. Number of cores to use for parallel motif finding.
+#' @param BPPARAM A \linkS4class{BiocParallelParam} object specifying the
+#'   parallel backend. Defaults to \code{BiocParallel::SerialParam()}.
 #' @param verbose Logical. If \code{TRUE}, print status messages via
 #'   \code{message()}.
 #'
@@ -39,7 +40,6 @@
 #'     associated statistics.}
 #' }
 #'
-#' @import foreach
 #' @keywords internal
 .local_fisher <- function(motif_region,
                           refseqs_motif_region,
@@ -52,7 +52,7 @@
                           lcminove,
                           discontinuous_motifs,
                           motif_distance_cutoff,
-                          no_cores,
+                          BPPARAM,
                           verbose) {
 
   ## -----------------------------------------------------------
@@ -69,7 +69,7 @@
       motif.lengths   = motif_length,
       min.depth       = 1L,
       discontinuous   = discontinuous_motifs,
-      nthreads        = no_cores
+      nthreads        = BiocParallel::bpnworkers(BPPARAM)
     )
     colnames(ref_motifs_df)[colnames(ref_motifs_df) == "frequency"] <- "count"
 
@@ -79,50 +79,33 @@
       motif.lengths   = motif_length,
       min.depth       = 1L,
       discontinuous   = discontinuous_motifs,
-      nthreads        = no_cores
+      nthreads        = BiocParallel::bpnworkers(BPPARAM)
     )
     colnames(motifs_df)[colnames(motifs_df) == "frequency"] <- "count"
 
   } else {
-    ## ---- Fallback: foreach chunking with stringdist backend ----
+    ## ---- Fallback: BiocParallel chunking with stringdist backend ----
     if (verbose) message("Finding motifs in reference sequences...")
 
-    # Divide the sequences equally among all cores
-    overhang <- length(refseqs_motif_region) %% no_cores
-    id_list  <- list()
-    last_id  <- 0
-    next_id  <- 0
-    steps    <- (length(refseqs_motif_region) - overhang) / no_cores
-
-    for (i in seq_len(no_cores)) {
-      next_id <- last_id + steps
-      if (overhang > 0) {
-        next_id <- next_id + 1
-        overhang <- overhang - 1
-      }
-      id_list[[i]] <- (last_id + 1):next_id
-      last_id <- next_id
-    }
+    # Divide the sequences equally among all workers
+    no_cores_count <- BiocParallel::bpnworkers(BPPARAM)
+    id_list <- split(
+      seq_along(refseqs_motif_region),
+      cut(seq_along(refseqs_motif_region), no_cores_count, labels = FALSE)
+    )
 
     # Receive all motifs in the reference sequences
-    ref_motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-      return(findMotifs(seqs = refseqs_motif_region[id_list[[i]]],
-                        q = motif_length,
-                        discontinuous = discontinuous_motifs))
-    }
+    ref_motifs_list <- BiocParallel::bplapply(id_list, function(ids) {
+      findMotifs(seqs = refseqs_motif_region[ids],
+                 q = motif_length,
+                 discontinuous = discontinuous_motifs)
+    }, BPPARAM = BPPARAM)
 
     # Convert the list into a more manageable data frame
-    ref_motifs_df <- NULL
-    for (i in seq_len(no_cores)) {
-      if (i == 1) {
-        ref_motifs_df <- ref_motifs_list[[i]]
-      } else {
-        ref_motifs_df <- merge(x = ref_motifs_df,
-                               y = ref_motifs_list[[i]],
-                               by = "motif",
-                               all = TRUE)
-      }
-    }
+    ref_motifs_df <- Reduce(
+      function(x, y) merge(x, y, by = "motif", all = TRUE),
+      ref_motifs_list
+    )
     ref_motifs_df[is.na(ref_motifs_df)] <- 0
     ref_motifs_df <- data.frame(
       motif = ref_motifs_df$motif,
@@ -131,42 +114,24 @@
 
     if (verbose) message("Finding motifs in sample sequences...")
 
-    # Divide the sequences equally among all cores
-    overhang <- length(motif_region) %% no_cores
-    id_list  <- list()
-    last_id  <- 0
-    next_id  <- 0
-    steps    <- (length(motif_region) - overhang) / no_cores
-
-    for (i in seq_len(no_cores)) {
-      next_id <- last_id + steps
-      if (overhang > 0) {
-        next_id <- next_id + 1
-        overhang <- overhang - 1
-      }
-      id_list[[i]] <- (last_id + 1):next_id
-      last_id <- next_id
-    }
+    # Divide the sequences equally among all workers
+    id_list <- split(
+      seq_along(motif_region),
+      cut(seq_along(motif_region), no_cores_count, labels = FALSE)
+    )
 
     # Receive all motifs in the sample sequences
-    motifs_list <- foreach::foreach(i = seq_len(no_cores)) %dopar% {
-      return(findMotifs(seqs = motif_region[id_list[[i]]],
-                        q = motif_length,
-                        discontinuous = discontinuous_motifs))
-    }
+    motifs_list <- BiocParallel::bplapply(id_list, function(ids) {
+      findMotifs(seqs = motif_region[ids],
+                 q = motif_length,
+                 discontinuous = discontinuous_motifs)
+    }, BPPARAM = BPPARAM)
 
     # Convert the list into a more manageable data frame
-    motifs_df <- NULL
-    for (i in seq_len(no_cores)) {
-      if (i == 1) {
-        motifs_df <- motifs_list[[i]]
-      } else {
-        motifs_df <- merge(x = motifs_df,
-                           y = motifs_list[[i]],
-                           by = "motif",
-                           all = TRUE)
-      }
-    }
+    motifs_df <- Reduce(
+      function(x, y) merge(x, y, by = "motif", all = TRUE),
+      motifs_list
+    )
     motifs_df[is.na(motifs_df)] <- 0
     motifs_df <- data.frame(
       motif = motifs_df$motif,

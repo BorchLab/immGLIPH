@@ -22,7 +22,8 @@
 #'   a V-gene.
 #' @param all_aa_interchangeable Logical. If \code{FALSE}, only pairs whose
 #'   variable-position amino acids have BLOSUM62 >= 0 are kept.
-#' @param no_cores Integer. Number of registered parallel cores.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object
+#'   controlling parallel evaluation.
 #' @param verbose Logical. Print progress messages.
 #'
 #' @return A list with elements:
@@ -35,7 +36,6 @@
 #'     similarities were found.}
 #' }
 #'
-#' @import foreach
 #' @keywords internal
 .global_fisher <- function(seqs,
                            motif_region,
@@ -46,7 +46,7 @@
                            boundary_size,
                            global_vgene,
                            all_aa_interchangeable,
-                           no_cores,
+                           BPPARAM,
                            verbose) {
 
   ## Load BLOSUM62 compatible amino acid pairs
@@ -81,11 +81,8 @@
   sample_seqs$tag        <- sample_seqs$struct
 
   ## Expand: for each position, replace that position with "%"
-  i <- NULL
-  exp_sample_seqs <- foreach::foreach(
-    i = seq_len(max(sample_seqs$nchar)),
-    .combine = rbind
-  ) %dopar% {
+  exp_sample_seqs <- do.call(rbind, BiocParallel::bplapply(
+    seq_len(max(sample_seqs$nchar)), function(i) {
     temp_part <- sample_seqs[sample_seqs$nchar >= i, ]
     temp_part$pos <- i
     temp_part$aa_at_pos <- substr(temp_part$struct, i, i)
@@ -95,7 +92,7 @@
     dup_check <- duplicated(temp_part$tag) |
                  duplicated(temp_part$tag, fromLast = TRUE)
     temp_part[dup_check, ]
-  }
+  }, BPPARAM = BPPARAM))
 
   ## Early exit if nothing duplicated
   if (is.null(exp_sample_seqs) || nrow(exp_sample_seqs) == 0) {
@@ -131,16 +128,14 @@
   reference_seqs$aa_at_pos  <- ""
   reference_seqs$tag        <- reference_seqs$struct
 
-  exp_reference_seqs <- foreach::foreach(
-    i = seq_len(min(max(reference_seqs$nchar), max(sample_seqs$nchar))),
-    .combine = rbind
-  ) %dopar% {
+  exp_reference_seqs <- do.call(rbind, BiocParallel::bplapply(
+    seq_len(min(max(reference_seqs$nchar), max(sample_seqs$nchar))), function(i) {
     temp_part <- reference_seqs[reference_seqs$nchar >= i, ]
     temp_part$pos <- i
     temp_part$aa_at_pos <- substr(temp_part$struct, i, i)
     substr(temp_part$tag, i, i) <- "%"
     temp_part[temp_part$tag %in% unq_sample_struct, ]
-  }
+  }, BPPARAM = BPPARAM))
 
   ## -----------------------------------------------------------------
   ## Step 3: Compute struct frequencies and enrichment
@@ -177,10 +172,8 @@
     all.x = TRUE
   )
 
-  edges <- foreach::foreach(
-    i = seq_len(nrow(sample_stats)),
-    .combine = rbind
-  ) %dopar% {
+  edges <- do.call(rbind, BiocParallel::bplapply(
+    seq_len(nrow(sample_stats)), function(i) {
     act_members <- unique(
       exp_sample_seqs[exp_sample_seqs$tag == sample_stats$tag[i], ]
     )
@@ -214,7 +207,7 @@
                 act_members$aa_at_pos[combn_ids[, 2]]) %in% BlosumVec)
     }
     ret[keep, ]
-  }
+  }, BPPARAM = BPPARAM))
 
   ## -----------------------------------------------------------------
   ## Step 5: Build cluster network
@@ -242,7 +235,7 @@
                               "position", "TRBV")
   cm_splitted$position <- as.numeric(cm_splitted$position)
 
-  cluster_list_raw <- foreach::foreach(i = seq_len(cm$no)) %dopar% {
+  cluster_list_raw <- BiocParallel::bplapply(seq_len(cm$no), function(i) {
     csize     <- cm$csize[i]
     member_df <- unique(cm_splitted[which(cm$membership == i), ])
     num_cdr3s <- length(unique(member_df$CDR3b))
@@ -251,7 +244,7 @@
       paste(unique(member_df$CDR3b), collapse = " "),
       paste(sort(unique(member_df$aa_at_position)), collapse = ""),
       member_df$TRBV[1])
-  }
+  }, BPPARAM = BPPARAM)
 
   cluster_list <- data.frame(
     matrix(unlist(cluster_list_raw), ncol = 6, byrow = TRUE),

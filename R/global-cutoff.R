@@ -11,9 +11,9 @@
 #'   considered globally similar.
 #' @param global_vgene logical. If \code{TRUE}, global connections are
 #'   restricted to sequence pairs that share a V gene.
-#' @param no_cores numeric. Number of cores registered with the parallel
-#'   backend (used only for documentation; the function relies on a
-#'   pre-registered \code{foreach} backend).
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object
+#'   controlling parallel evaluation (e.g.
+#'   \code{BiocParallel::MulticoreParam()}).
 #' @param verbose logical. If \code{TRUE}, progress messages are printed.
 #'
 #' @return A list with two elements:
@@ -26,13 +26,12 @@
 #' }
 #'
 #' @keywords internal
-#' @import foreach
 .global_cutoff <- function(seqs,
                            motif_region,
                            sequences,
                            gccutoff,
                            global_vgene,
-                           no_cores,
+                           BPPARAM,
                            verbose) {
 
   if (verbose) message("Searching for global similarities (cutoff method).")
@@ -44,9 +43,9 @@
                                   gccutoff, global_vgene, verbose))
   }
 
-  ## ---- Fallback: stringdist + foreach implementation ------------------------
+  ## ---- Fallback: stringdist + BiocParallel implementation ------------------------
   .global_cutoff_stringdist(seqs, motif_region, sequences,
-                            gccutoff, global_vgene, no_cores, verbose)
+                            gccutoff, global_vgene, BPPARAM, verbose)
 }
 
 #' immApex-accelerated global cutoff via buildNetwork()
@@ -118,11 +117,11 @@
   )
 }
 
-#' stringdist + foreach fallback for global cutoff
+#' stringdist + BiocParallel fallback for global cutoff
 #' @return A list with edge data and excluded sequence IDs.
 #' @keywords internal
 .global_cutoff_stringdist <- function(seqs, motif_region, sequences,
-                                      gccutoff, global_vgene, no_cores,
+                                      gccutoff, global_vgene, BPPARAM,
                                       verbose) {
 
   ## Prepare V-gene lookup vectors when V-gene filtering is requested
@@ -137,7 +136,7 @@
   ## Parallel loop: for every sequence compute Hamming distance to all
   ## others and identify neighbours within gccutoff
   ## ------------------------------------------------------------------
-  res <- foreach::foreach(i = seq_along(seqs)) %dopar% {
+  res <- BiocParallel::bplapply(seq_along(seqs), function(i) {
     not_in_global_ids <- c()
     global_con        <- c()
 
@@ -176,17 +175,13 @@
     }
 
     list(not_in_global_ids = not_in_global_ids, global_con = global_con)
-  }
+  }, BPPARAM = BPPARAM)
 
   ## ------------------------------------------------------------------
   ## Collect results from parallel workers
   ## ------------------------------------------------------------------
-  not_in_global_ids <- c()
-  global_con        <- c()
-  for (i in seq_along(res)) {
-    not_in_global_ids <- c(not_in_global_ids, res[[i]]$not_in_global_ids)
-    global_con        <- rbind(global_con, res[[i]]$global_con)
-  }
+  not_in_global_ids <- unlist(lapply(res, `[[`, "not_in_global_ids"))
+  global_con <- do.call(rbind, lapply(res, `[[`, "global_con"))
 
   ## Build edge data frame
   if (!is.null(global_con)) {
