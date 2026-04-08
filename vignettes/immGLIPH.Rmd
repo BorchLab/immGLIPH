@@ -16,10 +16,11 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
+library(BiocStyle)
 knitr::opts_chunk$set(
   echo = TRUE,
   message = FALSE,
-
+  tidy = FALSE,
   warning = FALSE,
   fig.width = 7,
   fig.height = 5
@@ -67,6 +68,8 @@ pre-download the data with:
 BiocManager::install("BiocFileCache")
 ref <- getGLIPHreference()
 ```
+
+### Loading Package
 
 ```{r}
 library(immGLIPH)
@@ -126,13 +129,12 @@ scRepertoire to prepare your data and pass the output directly to immGLIPH.
 library(scRepertoire)
 
 # After processing with cellranger/etc, combine contigs
-combined <- combineTCR(
-  contig_list,
-  samples = c("P1", "P2")
-)
+combined <- combineTCR(contig_list[1:2],
+                        samples = c("P1", "P2"))
 
 # Pass scRepertoire output directly to runGLIPH
-results <- runGLIPH(combined, method = "gliph2")
+results <- runGLIPH(combined, 
+                    method = "gliph2")
 ```
 
 For **SingleCellExperiment** objects that already contain TCR metadata (e.g.,
@@ -145,7 +147,9 @@ library(SingleCellExperiment)
 data("gliph_sce")
 
 # SingleCellExperiment object with TCR info in colData
-results <- runGLIPH(gliph_sce, method = "gliph2", chains = "TRB")
+results <- runGLIPH(gliph_sce, 
+                    method = "gliph2", 
+                    chains = "TRB")
 ```
 
 # The `runGLIPH()` Function
@@ -379,18 +383,19 @@ data("gliph_input_data")
 sample_seqs <- as.character(gliph_input_data$CDR3b[seq_len(100)])
 
 # Find all 3-mers appearing at least 5 times
-motifs <- findMotifs(seqs = sample_seqs, q = 3, kmer_mindepth = 5)
+motifs <- findMotifs(seqs = sample_seqs, 
+                     q = 3, 
+                     kmer_mindepth = 5)
 head(motifs[order(motifs$V1, decreasing = TRUE), ])
 ```
 
 Including discontinuous motifs (e.g., `C.S` where `.` is any amino acid):
 
 ```{r}
-disc_motifs <- findMotifs(
-  seqs         = sample_seqs,
-  q            = 2,
-  kmer_mindepth = 5,
-  discontinuous = TRUE
+disc_motifs <- findMotifs(seqs          = sample_seqs,
+                          q             = 2,
+                          kmer_mindepth = 5,
+                          discontinuous = TRUE
 )
 # Show discontinuous motifs (those containing a dot)
 disc_only <- disc_motifs[grep("\\.", disc_motifs$motif), ]
@@ -439,8 +444,7 @@ if (length(res_gliph1$cluster_list) > 0) {
     refdb_beta     = ref_df,
     gliph_version  = 2,
     sim_depth      = 100,
-    n_cores        = 1
-  )
+    n_cores        = 1)
   head(rescored)
 }
 ```
@@ -565,7 +569,7 @@ computationally intensive steps:
    call, replacing the parallel loop over `stringdist::stringdist()`.
 
 If immApex is not installed, immGLIPH falls back to the original pure-R
-implementations transparently---no code changes are needed.
+implementations transparently, no code changes are needed.
 
 ```{r eval=FALSE}
 # Install immApex for performance acceleration
