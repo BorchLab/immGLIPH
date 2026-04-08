@@ -10,7 +10,7 @@
   sequences,
   gccutoff,
   global_vgene,
-  no_cores,
+  BPPARAM,
   verbose
 )
 }
@@ -31,9 +31,9 @@ considered globally similar.}
 \item{global_vgene}{logical. If \code{TRUE}, global connections are
 restricted to sequence pairs that share a V gene.}
 
-\item{no_cores}{numeric. Number of cores registered with the parallel
-backend (used only for documentation; the function relies on a
-pre-registered \code{foreach} backend).}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object
+controlling parallel evaluation (e.g.
+\code{BiocParallel::MulticoreParam()}).}
 
 \item{verbose}{logical. If \code{TRUE}, progress messages are printed.}
 }

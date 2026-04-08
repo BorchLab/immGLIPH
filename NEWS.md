@@ -1,3 +1,21 @@
+# immGLIPH 0.99.3
+
+* Replaced `foreach`/`doParallel` with `BiocParallel` for parallelization
+  across all functions per Bioconductor recommendations.
+* Replaced `devtools::install_github()` references with
+  `BiocManager::install()` in vignette and error messages.
+* Updated vignette to use `SingleCellExperiment` instead of `Seurat` for
+  the single-cell workflow example.
+* Fixed `combineTCR()` example in vignette (removed obsolete `cells`
+  argument).
+* Made more vignette code chunks evaluable (`clusterScoring()`,
+  `deNovoTCRs()`, `plotNetwork()` examples).
+* Noted that `scRepertoire` and `immApex` are Bioconductor packages.
+* Replaced iterative for-loop list growing with vectorized alternatives
+  (`lapply()`, `vapply()`, `Reduce()`).
+* Standardized code spacing around operators and after commas per
+  Bioconductor coding style.
+
 # immGLIPH 0.99.2
 
 * Fixing roxygen documentation issue creating warnings. 

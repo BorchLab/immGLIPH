@@ -16,7 +16,7 @@
   lcminove,
   discontinuous_motifs,
   motif_distance_cutoff,
-  no_cores,
+  BPPARAM,
   verbose
 )
 }
@@ -55,7 +55,8 @@ in the search.}
 to be grouped together. Not used directly in this function but kept for
 interface consistency.}
 
-\item{no_cores}{Numeric. Number of cores to use for parallel motif finding.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying the
+parallel backend. Defaults to \code{BiocParallel::SerialParam()}.}
 
 \item{verbose}{Logical. If \code{TRUE}, print status messages via
 \code{message()}.}

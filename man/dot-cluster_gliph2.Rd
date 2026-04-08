@@ -17,7 +17,8 @@
   motif_distance_cutoff,
   cluster_min_size,
   boost_local_significance,
-  verbose
+  verbose,
+  BPPARAM
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ local motifs.}
 using germline N-nucleotide information.}
 
 \item{verbose}{Logical. Print progress messages.}
+
+\item{BPPARAM}{A \code{BiocParallelParam} object for parallel evaluation.}
 }
 \value{
 A list with:

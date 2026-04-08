@@ -14,7 +14,7 @@
   boundary_size,
   global_vgene,
   all_aa_interchangeable,
-  no_cores,
+  BPPARAM,
   verbose
 )
 }
@@ -43,7 +43,8 @@ a V-gene.}
 \item{all_aa_interchangeable}{Logical. If \code{FALSE}, only pairs whose
 variable-position amino acids have BLOSUM62 >= 0 are kept.}
 
-\item{no_cores}{Integer. Number of registered parallel cores.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object
+controlling parallel evaluation.}
 
 \item{verbose}{Logical. Print progress messages.}
 }

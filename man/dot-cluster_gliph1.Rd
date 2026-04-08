@@ -14,7 +14,8 @@
   global_vgene,
   public_tcrs,
   cluster_min_size,
-  verbose
+  verbose,
+  BPPARAM
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ global neighbours (used to add singletons).}
 \item{cluster_min_size}{Integer. Minimum cluster size to retain.}
 
 \item{verbose}{Logical. Print progress messages.}
+
+\item{BPPARAM}{A \code{BiocParallelParam} object for parallel evaluation.}
 }
 \value{
 A list with:

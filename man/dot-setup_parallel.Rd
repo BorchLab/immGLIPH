@@ -2,23 +2,26 @@
 % Please edit documentation in R/utils-parallel.R
 \name{.setup_parallel}
 \alias{.setup_parallel}
-\title{Setup parallel backend}
+\title{Create a BiocParallel backend parameter object}
 \usage{
 .setup_parallel(n_cores)
 }
 \arguments{
-\item{n_cores}{Number of cores. NULL auto-detects.}
+\item{n_cores}{Number of cores. \code{NULL} auto-detects.}
 }
 \value{
-The actual number of cores being used
+A \code{BiocParallelParam} object.
 }
 \description{
-On Unix-like systems (macOS, Linux) \code{doParallel} uses forked
-processes that inherit the loaded package namespace. On Windows, PSOCK
-clusters are used instead; these require loading the package on each
-worker via \code{library()}, which fails during \code{R CMD check}
-because the package is not yet installed in the standard library path.
-To avoid this, we fall back to sequential execution (\code{registerDoSEQ})
-when only one core is requested or when running on Windows.
+Returns a \code{\link[BiocParallel]{BiocParallelParam}} suitable for the
+current platform and requested number of cores. On Unix-like systems
+(macOS, Linux) with more than one core, a
+\code{\link[BiocParallel]{MulticoreParam}} is returned. On Windows or
+when only one core is requested, a
+\code{\link[BiocParallel]{SerialParam}} is used instead.
+}
+\details{
+The core count is clamped to 2 when the \env{_R_CHECK_LIMIT_CORES_}
+environment variable is set (as during \command{R CMD check}).
 }
 \keyword{internal}

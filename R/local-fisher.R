@@ -27,7 +27,7 @@
 #' @param motif_distance_cutoff Numeric. Maximum positional distance for motifs
 #'   to be grouped together. Not used directly in this function but kept for
 #'   interface consistency.
-#' @param BPPARAM A \linkS4class{BiocParallelParam} object specifying the
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object specifying the
 #'   parallel backend. Defaults to \code{BiocParallel::SerialParam()}.
 #' @param verbose Logical. If \code{TRUE}, print status messages via
 #'   \code{message()}.
