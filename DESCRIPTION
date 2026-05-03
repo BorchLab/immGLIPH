@@ -1,6 +1,6 @@
 Package: immGLIPH
 Title: Grouping of Lymphocyte Interactions by Paratope Hotspots
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: c(
     person("Nick", "Borcherding", role = c("aut", "cre"),
            email = "ncborch@gmail.com")
