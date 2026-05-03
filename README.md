@@ -127,6 +127,34 @@ See the package vignette for the full tutorial:
 vignette("immGLIPH")
 ```
 
+## Validation
+
+immGLIPH reproduces the published GLIPH and GLIPH2 cluster vectors on
+each paper's own dataset, when run with paper-matched parameters and
+(where applicable) the same post-hoc filtering criteria.
+
+| Dataset | immGLIPH configuration | n | ARI | NMI | Pairwise F1 | Precision | Recall |
+|:--------|:-----------------------|--:|----:|----:|------------:|----------:|-------:|
+| Glanville 2017 | `gliph1` + paper params | 144 | **0.985** | 0.994 | **0.985** | 1.000 | 0.971 |
+| Huang 2020 | `gliph2` + paper params + filter | 171 | **0.863** | 0.968 | **0.867** | 0.931 | 0.812 |
+
+*Comparison universe: CDR3s present in both the immGLIPH input and the
+published reference cluster output. Higher = stronger agreement with the
+original tool's output.*
+
+![](man/figures/concordance_summary.png)
+
+For Glanville, every pair immGLIPH co-clustered was also co-clustered by
+the original GLIPH (precision = 1.000), and 97% of the original GLIPH
+co-clusterings were recovered (recall = 0.971). For Huang, precision is
+0.931 and recall 0.812 against the curated 354-group GLIPH2 set.
+
+Full pipeline (data prep, paper-matched parameter settings, post-hoc
+filter implementation, metric definitions, and a Quarto report) lives at
+the companion benchmark repository:
+
+**[BorchLab/immGLIPH-benchmark](https://github.com/BorchLab/immGLIPH-benchmark)**
+
 ## Bug Reports/New Features
 
 #### If you run into any issues or bugs please submit a [GitHub issue](https://github.com/BorchLab/immGLIPH/issues) with details of the issue.

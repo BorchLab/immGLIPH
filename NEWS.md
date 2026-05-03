@@ -1,3 +1,18 @@
+# immGLIPH 0.99.4
+
+* Added a Validation section to the README with concordance metrics
+  against the published GLIPH and GLIPH2 cluster vectors from
+  Glanville et al. (2017) and Huang et al. (2020). With paper-matched
+  parameters, immGLIPH reproduces the published cluster vectors at
+  ARI 0.985 (Glanville) and 0.863 (Huang) on the intersection of
+  shared CDR3s. Full benchmark code lives at
+  [BorchLab/immGLIPH-benchmark](https://github.com/BorchLab/immGLIPH-benchmark).
+* Fixed `clusterScoring()` failure in the clonal-expansion-enrichment
+  test when a cluster contains more members than the reference pool
+  has rows. The null draw now uses `replace = TRUE` (bootstrap),
+  matching the V-gene null and the statistically appropriate choice
+  for resampling. Surfaced on the Huang 2020 benchmark.
+
 # immGLIPH 0.99.3
 
 * Replaced `foreach`/`doParallel` with `BiocParallel` for parallelization
