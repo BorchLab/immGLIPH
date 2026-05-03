@@ -428,7 +428,7 @@ clusterScoring <- function(cluster_list,
       sample_score <- sum(as.numeric(act_seq_infos$counts)) / num_members
       test_scores <- vapply(seq_len(sim_depth), function(i) {
         random_subsample <- sample(
-          x = cdr3_sequences$counts, size = num_members, replace = FALSE
+          x = cdr3_sequences$counts, size = num_members, replace = TRUE
         )
         sum(as.numeric(random_subsample)) / num_members
       }, numeric(1))

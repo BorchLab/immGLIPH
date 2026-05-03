@@ -344,6 +344,56 @@ test_that("clusterScoring with multiple clusters", {
   expect_equal(nrow(result), 2)
 })
 
+test_that("clusterScoring handles cluster larger than reference pool (counts)", {
+  # Regression test: previously errored with
+  #   "invalid first argument" from sample.int when num_members exceeded
+  #   length(cdr3_sequences$counts) because the null draw used
+  #   replace = FALSE. Bootstrap (replace = TRUE) is the correct
+  #   semantics for the clonal-expansion-enrichment null distribution.
+  skip_on_cran()
+
+  ref_df <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF",
+              "CASSLTGGEETQYF", "CASSLGGRETQYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1", "TRBV7-2", "TRBV5-1"),
+    stringsAsFactors = FALSE
+  )
+
+  seqs <- data.frame(
+    CDR3b = c("CASSLAPGATNEKLFF", "CASSLDRGEVFF", "CASSYLAGGRNTLYF",
+              "CASSLTGGEETQYF", "CASSLGGRETQYF"),
+    TRBV = c("TRBV5-1", "TRBV6-2", "TRBV5-1", "TRBV7-2", "TRBV5-1"),
+    counts = c(5, 3, 2, 1, 1),
+    stringsAsFactors = FALSE
+  )
+
+  # Cluster has 10 members (via duplicated CDR3s), exceeding the 5-row
+  # reference pool — exercises the resampling branch where
+  # num_members > length(cdr3_sequences$counts).
+  cl <- list(
+    "CRG-1" = data.frame(
+      CDR3b = rep(c("CASSLAPGATNEKLFF", "CASSLDRGEVFF"), times = 5),
+      TRBV = rep(c("TRBV5-1", "TRBV6-2"), times = 5),
+      counts = rep(c(5, 3), times = 5),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_no_error(
+    result <- clusterScoring(
+      cluster_list = cl,
+      cdr3_sequences = seqs,
+      refdb_beta = ref_df,
+      gliph_version = 1,
+      sim_depth = 10,
+      n_cores = 1
+    )
+  )
+  expect_s3_class(result, "data.frame")
+  expect_true("clonal.expansion.score" %in% colnames(result))
+  expect_equal(nrow(result), 1)
+})
+
 test_that("clusterScoring with custom v_usage_freq", {
   skip_on_cran()
 
