@@ -2,7 +2,7 @@
 % Please edit documentation in R/global-cutoff.R
 \name{.global_cutoff_stringdist}
 \alias{.global_cutoff_stringdist}
-\title{stringdist + foreach fallback for global cutoff}
+\title{stringdist + BiocParallel fallback for global cutoff}
 \usage{
 .global_cutoff_stringdist(
   seqs,
@@ -10,7 +10,7 @@
   sequences,
   gccutoff,
   global_vgene,
-  no_cores,
+  BPPARAM,
   verbose
 )
 }
@@ -18,6 +18,6 @@
 A list with edge data and excluded sequence IDs.
 }
 \description{
-stringdist + foreach fallback for global cutoff
+stringdist + BiocParallel fallback for global cutoff
 }
 \keyword{internal}

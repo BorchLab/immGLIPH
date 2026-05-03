@@ -18,6 +18,7 @@
 #' @param public_tcrs Logical. If \code{FALSE}, restrict edges to same donor.
 #' @param cluster_min_size Integer. Minimum cluster size to retain.
 #' @param verbose Logical. Print progress messages.
+#' @param BPPARAM A \code{BiocParallelParam} object for parallel evaluation.
 #'
 #' @return A list with:
 #' \describe{
@@ -27,7 +28,6 @@
 #'   \item{save_cluster_list_df}{Data frame for saving cluster members.}
 #' }
 #'
-#' @import foreach
 #' @keywords internal
 .cluster_gliph1 <- function(clone_network,
                              sequences,
@@ -38,7 +38,8 @@
                              global_vgene,
                              public_tcrs,
                              cluster_min_size,
-                             verbose) {
+                             verbose,
+                             BPPARAM) {
 
   if (verbose) message("Clustering sequences (GLIPH1.0 method).")
 
@@ -57,7 +58,6 @@
   in_local_ids <- integer(0)
   if (!is.null(clone_network)) {
     in_network <- unique(c(clone_network$V1, clone_network$V2))
-    # Track which sequence indices are in any edge
     in_local_ids <- which(seqs %in% in_network)
   }
 
@@ -98,43 +98,44 @@
   clone_network[] <- lapply(clone_network, as.character)
 
   ## ---- Build tuple network ----
-  x <- NULL
-  temp_clone_network <- foreach::foreach(
-    x = seq_len(nrow(clone_network))
-  ) %dopar% {
-    act_ids1 <- which(sequences$CDR3b == clone_network[x, 1])
-    act_ids2 <- which(sequences$CDR3b == clone_network[x, 2])
+  temp_clone_network <- BiocParallel::bplapply(
+    seq_len(nrow(clone_network)),
+    function(x) {
+      act_ids1 <- which(sequences$CDR3b == clone_network[x, 1])
+      act_ids2 <- which(sequences$CDR3b == clone_network[x, 2])
 
-    comb_ids <- expand.grid(act_ids1, act_ids2)
-    comb_ids <- unique(comb_ids)
+      comb_ids <- expand.grid(act_ids1, act_ids2)
+      comb_ids <- unique(comb_ids)
 
-    act_infos1 <- sequences[comb_ids[, 1], ]
-    act_infos2 <- sequences[comb_ids[, 2], ]
+      act_infos1 <- sequences[comb_ids[, 1], ]
+      act_infos2 <- sequences[comb_ids[, 2], ]
 
-    ## Filter for same donor if required
-    if (is.logical(public_tcrs) && !public_tcrs && patient.info) {
-      exclude_rows <- act_infos1$patient != act_infos2$patient
-      act_infos1 <- act_infos1[!exclude_rows, ]
-      act_infos2 <- act_infos2[!exclude_rows, ]
-    }
+      ## Filter for same donor if required
+      if (is.logical(public_tcrs) && !public_tcrs && patient.info) {
+        exclude_rows <- act_infos1$patient != act_infos2$patient
+        act_infos1 <- act_infos1[!exclude_rows, ]
+        act_infos2 <- act_infos2[!exclude_rows, ]
+      }
 
-    ## Filter global edges for matching V-gene
-    if (global_vgene && vgene.info &&
-        clone_network[x, 3] == "global" && nrow(act_infos1) > 0) {
-      exclude_rows <- act_infos1$TRBV != act_infos2$TRBV
-      act_infos1 <- act_infos1[!exclude_rows, ]
-      act_infos2 <- act_infos2[!exclude_rows, ]
-    }
+      ## Filter global edges for matching V-gene
+      if (global_vgene && vgene.info &&
+          clone_network[x, 3] == "global" && nrow(act_infos1) > 0) {
+        exclude_rows <- act_infos1$TRBV != act_infos2$TRBV
+        act_infos1 <- act_infos1[!exclude_rows, ]
+        act_infos2 <- act_infos2[!exclude_rows, ]
+      }
 
-    if (nrow(act_infos1) > 0) {
-      act_infos1 <- do.call(paste, c(act_infos1, sep = "$#$#$"))
-      act_infos2 <- do.call(paste, c(act_infos2, sep = "$#$#$"))
-      var_ret <- data.frame(act_infos1, act_infos2)
-      t(var_ret)
-    } else {
-      NULL
-    }
-  }
+      if (nrow(act_infos1) > 0) {
+        act_infos1 <- do.call(paste, c(act_infos1, sep = "$#$#$"))
+        act_infos2 <- do.call(paste, c(act_infos2, sep = "$#$#$"))
+        var_ret <- data.frame(act_infos1, act_infos2)
+        t(var_ret)
+      } else {
+        NULL
+      }
+    },
+    BPPARAM = BPPARAM
+  )
 
   temp_clone_network <- data.frame(
     matrix(unlist(temp_clone_network), ncol = 2, byrow = TRUE),
@@ -205,16 +206,18 @@
   }
 
   if (nrow(part_4_res) > 0) {
-    save_cluster_list_df <- foreach::foreach(
-      i = seq_along(part_4_res_list),
-      .combine = "rbind"
-    ) %dopar% {
-      temp <- part_4_res_list[[i]]
-      cbind(
-        data.frame(tag = rep(names(part_4_res_list)[i], nrow(temp))),
-        temp
-      )
-    }
+    save_parts <- BiocParallel::bplapply(
+      seq_along(part_4_res_list),
+      function(i) {
+        temp <- part_4_res_list[[i]]
+        cbind(
+          data.frame(tag = rep(names(part_4_res_list)[i], nrow(temp))),
+          temp
+        )
+      },
+      BPPARAM = BPPARAM
+    )
+    save_cluster_list_df <- do.call(rbind, save_parts)
   } else {
     part_4_res <- NULL
     part_4_res_list <- list()
@@ -259,6 +262,7 @@
 #' @param boost_local_significance Logical. Whether to boost local p-values
 #'   using germline N-nucleotide information.
 #' @param verbose Logical. Print progress messages.
+#' @param BPPARAM A \code{BiocParallelParam} object for parallel evaluation.
 #'
 #' @return A list with:
 #' \describe{
@@ -270,7 +274,6 @@
 #'   \item{save_cluster_list_df}{Data frame for saving cluster member details.}
 #' }
 #'
-#' @import foreach
 #' @keywords internal
 .cluster_gliph2 <- function(local_res,
                              global_res,
@@ -284,7 +287,8 @@
                              motif_distance_cutoff,
                              cluster_min_size,
                              boost_local_significance,
-                             verbose) {
+                             verbose,
+                             BPPARAM) {
 
   if (verbose) message("Clustering sequences (GLIPH2.0 method).")
 
@@ -449,31 +453,32 @@
     ## Load BLOSUM vector for global filtering
     BlosumVec <- .get_blosum_vec()
 
-    i <- NULL
-    cluster_list <- foreach::foreach(
-      i = seq_len(nrow(merged_clusters))
-    ) %dopar% {
-      if (merged_clusters$type[i] == "local") {
-        act_seqs <- unlist(strsplit(merged_clusters$members[i], split = " "))
-        return(sequences[sequences$CDR3b %in% act_seqs, ])
-      }
-      if (merged_clusters$type[i] == "global") {
-        act_seqs <- unlist(strsplit(merged_clusters$members[i], split = " "))
-        act_details <- unlist(strsplit(merged_clusters$tag[i], split = "_"))
-        if (!global_vgene) {
-          return(data.frame(
-            sequences[sequences$CDR3b %in% act_seqs, ],
-            stringsAsFactors = FALSE
-          ))
-        } else {
-          return(data.frame(
-            sequences[sequences$CDR3b %in% act_seqs &
-                        sequences$TRBV == act_details[2], ],
-            stringsAsFactors = FALSE
-          ))
+    cluster_list <- BiocParallel::bplapply(
+      seq_len(nrow(merged_clusters)),
+      function(i) {
+        if (merged_clusters$type[i] == "local") {
+          act_seqs <- unlist(strsplit(merged_clusters$members[i], split = " "))
+          return(sequences[sequences$CDR3b %in% act_seqs, ])
         }
-      }
-    }
+        if (merged_clusters$type[i] == "global") {
+          act_seqs <- unlist(strsplit(merged_clusters$members[i], split = " "))
+          act_details <- unlist(strsplit(merged_clusters$tag[i], split = "_"))
+          if (!global_vgene) {
+            return(data.frame(
+              sequences[sequences$CDR3b %in% act_seqs, ],
+              stringsAsFactors = FALSE
+            ))
+          } else {
+            return(data.frame(
+              sequences[sequences$CDR3b %in% act_seqs &
+                          sequences$TRBV == act_details[2], ],
+              stringsAsFactors = FALSE
+            ))
+          }
+        }
+      },
+      BPPARAM = BPPARAM
+    )
     names(cluster_list) <- merged_clusters$tag
 
     ## Update local cluster sizes
@@ -516,90 +521,100 @@
   if (!is.null(merged_clusters) && length(cluster_list) > 0) {
     ## Local edges
     if (local_similarities && any(merged_clusters$type == "local")) {
-      local_clone_network <- foreach::foreach(
-        i = which(merged_clusters$type == "local")
-      ) %dopar% {
-        temp_members <- cluster_list[[i]]$CDR3b
-        if (structboundaries) {
-          temp_members_frags <- substr(
-            temp_members,
-            boundary_size + 1,
-            nchar(temp_members) - boundary_size
+      local_edge_list <- BiocParallel::bplapply(
+        which(merged_clusters$type == "local"),
+        function(i) {
+          temp_members <- cluster_list[[i]]$CDR3b
+          if (structboundaries) {
+            temp_members_frags <- substr(
+              temp_members,
+              boundary_size + 1,
+              nchar(temp_members) - boundary_size
+            )
+          } else {
+            temp_members_frags <- temp_members
+          }
+
+          motif_name <- strsplit(names(cluster_list)[i], split = "_")[[1]][[1]]
+          temp_pos <- stringr::str_locate(temp_members_frags, motif_name)
+
+          if (length(temp_members) >= 2) {
+            combn_ids <- t(utils::combn(seq_along(temp_members), m = 2))
+          } else {
+            combn_ids <- t(utils::combn(rep(1, 2), m = 2))
+          }
+          temp_df <- data.frame(
+            V1          = temp_members[combn_ids[, 1]],
+            V2          = temp_members[combn_ids[, 2]],
+            type        = rep("local", nrow(combn_ids)),
+            cluster_tag = rep(names(cluster_list)[i], nrow(combn_ids)),
+            stringsAsFactors = FALSE
           )
-        } else {
-          temp_members_frags <- temp_members
-        }
 
-        motif_name <- strsplit(names(cluster_list)[i], split = "_")[[1]][[1]]
-        temp_pos <- stringr::str_locate(temp_members_frags, motif_name)
+          ## Restrict by positional distance
+          temp_df <- unique(temp_df[
+            abs(temp_pos[combn_ids[, 1], 1] -
+                  temp_pos[combn_ids[, 2], 1]) < motif_distance_cutoff, ])
 
-        if (length(temp_members) >= 2) {
-          combn_ids <- t(utils::combn(seq_along(temp_members), m = 2))
-        } else {
-          combn_ids <- t(utils::combn(rep(1, 2), m = 2))
-        }
-        temp_df <- data.frame(
-          V1          = temp_members[combn_ids[, 1]],
-          V2          = temp_members[combn_ids[, 2]],
-          type        = rep("local", nrow(combn_ids)),
-          cluster_tag = rep(names(cluster_list)[i], nrow(combn_ids)),
+          temp_df
+        },
+        BPPARAM = BPPARAM
+      )
+      local_clone_network <- do.call(rbind, local_edge_list)
+      if (is.null(local_clone_network)) {
+        local_clone_network <- data.frame(
+          V1 = character(0), V2 = character(0),
+          type = character(0), cluster_tag = character(0),
           stringsAsFactors = FALSE
         )
-
-        ## Restrict by positional distance
-        temp_df <- unique(temp_df[
-          abs(temp_pos[combn_ids[, 1], 1] -
-                temp_pos[combn_ids[, 2], 1]) < motif_distance_cutoff, ])
-
-        t(temp_df)
       }
-      local_clone_network <- data.frame(
-        matrix(unlist(local_clone_network), ncol = 4, byrow = TRUE),
-        stringsAsFactors = FALSE
-      )
-      colnames(local_clone_network) <- c("V1", "V2", "type", "cluster_tag")
       clone_network <- local_clone_network
     }
 
     ## Global edges
     if (global_similarities && any(merged_clusters$type == "global")) {
-      global_clone_network <- foreach::foreach(
-        i = which(merged_clusters$type == "global")
-      ) %dopar% {
-        temp_members <- cluster_list[[i]]$CDR3b
+      global_edge_list <- BiocParallel::bplapply(
+        which(merged_clusters$type == "global"),
+        function(i) {
+          temp_members <- cluster_list[[i]]$CDR3b
 
-        if (length(temp_members) >= 2) {
-          combn_ids <- t(utils::combn(seq_along(temp_members), m = 2))
-        } else {
-          combn_ids <- t(utils::combn(rep(1, 2), m = 2))
-        }
-        temp_df <- data.frame(
-          V1          = temp_members[combn_ids[, 1]],
-          V2          = temp_members[combn_ids[, 2]],
-          type        = rep("global", nrow(combn_ids)),
-          cluster_tag = rep(names(cluster_list)[i], nrow(combn_ids)),
+          if (length(temp_members) >= 2) {
+            combn_ids <- t(utils::combn(seq_along(temp_members), m = 2))
+          } else {
+            combn_ids <- t(utils::combn(rep(1, 2), m = 2))
+          }
+          temp_df <- data.frame(
+            V1          = temp_members[combn_ids[, 1]],
+            V2          = temp_members[combn_ids[, 2]],
+            type        = rep("global", nrow(combn_ids)),
+            cluster_tag = rep(names(cluster_list)[i], nrow(combn_ids)),
+            stringsAsFactors = FALSE
+          )
+
+          ## BLOSUM62 filtering at variable position
+          if (!all_aa_interchangeable) {
+            tag_name <- names(cluster_list)[i]
+            temp_pos <- stringr::str_locate(tag_name, "%")
+            if (structboundaries) temp_pos <- temp_pos + boundary_size
+            temp_df <- unique(temp_df[
+              paste0(
+                substr(temp_df$V1, temp_pos[1], temp_pos[1]),
+                substr(temp_df$V2, temp_pos[1], temp_pos[1])
+              ) %in% BlosumVec, ])
+          }
+
+          temp_df
+        },
+        BPPARAM = BPPARAM
+      )
+      global_clone_network <- do.call(rbind, global_edge_list)
+      if (is.null(global_clone_network)) {
+        global_clone_network <- data.frame(
+          V1 = character(0), V2 = character(0),
+          type = character(0), cluster_tag = character(0),
           stringsAsFactors = FALSE
         )
-
-        ## BLOSUM62 filtering at variable position
-        if (!all_aa_interchangeable) {
-          tag_name <- names(cluster_list)[i]
-          temp_pos <- stringr::str_locate(tag_name, "%")
-          if (structboundaries) temp_pos <- temp_pos + boundary_size
-          temp_df <- unique(temp_df[
-            paste0(
-              substr(temp_df$V1, temp_pos[1], temp_pos[1]),
-              substr(temp_df$V2, temp_pos[1], temp_pos[1])
-            ) %in% BlosumVec, ])
-        }
-
-        t(temp_df)
       }
-      global_clone_network <- data.frame(
-        matrix(unlist(global_clone_network), ncol = 4, byrow = TRUE),
-        stringsAsFactors = FALSE
-      )
-      colnames(global_clone_network) <- c("V1", "V2", "type", "cluster_tag")
 
       if (is.null(clone_network)) {
         clone_network <- global_clone_network
@@ -636,16 +651,18 @@
     )
     merged_clusters$OvE[is.infinite(merged_clusters$OvE)] <- 0
 
-    save_cluster_list_df <- foreach::foreach(
-      i = seq_along(cluster_list),
-      .combine = "rbind"
-    ) %dopar% {
-      temp <- cluster_list[[i]]
-      cbind(
-        data.frame(tag = rep(names(cluster_list)[i], nrow(temp))),
-        temp
-      )
-    }
+    save_parts <- BiocParallel::bplapply(
+      seq_along(cluster_list),
+      function(i) {
+        temp <- cluster_list[[i]]
+        cbind(
+          data.frame(tag = rep(names(cluster_list)[i], nrow(temp))),
+          temp
+        )
+      },
+      BPPARAM = BPPARAM
+    )
+    save_cluster_list_df <- do.call(rbind, save_parts)
   }
 
   list(

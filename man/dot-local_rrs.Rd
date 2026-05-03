@@ -17,7 +17,7 @@
   discontinuous_motifs,
   cdr3_len_stratify,
   vgene_stratify,
-  no_cores,
+  BPPARAM,
   verbose,
   motif_lengths_list,
   ref_motif_lengths_id_list,
@@ -62,7 +62,8 @@ CDR3 length distribution.}
 \item{vgene_stratify}{Logical. Whether to stratify random subsamples by
 V-gene usage distribution.}
 
-\item{no_cores}{Integer. Number of cores for parallel execution.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object
+controlling parallel execution (default: \code{BiocParallel::bpparam()}).}
 
 \item{verbose}{Logical. If \code{TRUE}, emit progress messages.}
 

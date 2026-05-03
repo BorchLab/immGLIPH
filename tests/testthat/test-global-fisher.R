@@ -1,8 +1,5 @@
 # Tests for .global_fisher()
 
-# Register sequential backend for %dopar%
-foreach::registerDoSEQ()
-
 # ---- Helper: small synthetic data ------------------------------------------
 
 .make_global_fisher_data <- function() {
@@ -62,7 +59,7 @@ test_that(".global_fisher returns list with cluster_list and global_similarities
     boundary_size          = 3,
     global_vgene           = FALSE,
     all_aa_interchangeable = TRUE,
-    no_cores               = 1,
+    BPPARAM                = BiocParallel::SerialParam(),
     verbose                = FALSE
   )
 
@@ -86,7 +83,7 @@ test_that(".global_fisher cluster_list has expected columns when similarities fo
     boundary_size          = 3,
     global_vgene           = FALSE,
     all_aa_interchangeable = TRUE,
-    no_cores               = 1,
+    BPPARAM                = BiocParallel::SerialParam(),
     verbose                = FALSE
   )
 
@@ -129,7 +126,7 @@ test_that(".global_fisher returns FALSE for no structural matches", {
     boundary_size          = 3,
     global_vgene           = FALSE,
     all_aa_interchangeable = TRUE,
-    no_cores               = 1,
+    BPPARAM                = BiocParallel::SerialParam(),
     verbose                = FALSE
   )
 
@@ -165,7 +162,7 @@ test_that(".global_fisher with global_vgene restricts to same V-gene", {
     boundary_size          = 3,
     global_vgene           = TRUE,
     all_aa_interchangeable = TRUE,
-    no_cores               = 1,
+    BPPARAM                = BiocParallel::SerialParam(),
     verbose                = FALSE
   )
 
@@ -179,7 +176,7 @@ test_that(".global_fisher with global_vgene restricts to same V-gene", {
     boundary_size          = 3,
     global_vgene           = FALSE,
     all_aa_interchangeable = TRUE,
-    no_cores               = 1,
+    BPPARAM                = BiocParallel::SerialParam(),
     verbose                = FALSE
   )
 

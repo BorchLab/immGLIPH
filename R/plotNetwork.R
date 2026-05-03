@@ -55,7 +55,7 @@
 #' plotNetwork(clustering_output = res,
 #'             n_cores = 1)
 #'
-#' @import viridis foreach grDevices
+#' @import viridis grDevices
 #' @export
 
 plotNetwork <- function(clustering_output = NULL,
@@ -127,7 +127,7 @@ plotNetwork <- function(clustering_output = NULL,
   #################################################################
 
   ### Initiate parallelization
-  .setup_parallel(n_cores)
+  BPPARAM <- .setup_parallel(n_cores)
 
   ### Get cluster_list and cluster_properties with at least cluster_min_size members
   # cluster_list:       contains all members of the cluster and the sequence specific additional information (e.g. patient, count, etc.)
@@ -148,7 +148,7 @@ plotNetwork <- function(clustering_output = NULL,
   cluster_properties <- cluster_properties[hold_ids,]
 
   ### Pool sequence and cluster specific information (identical sequences in differenct clusters are treated as different entities)
-  cluster_data_frame <- data.frame(foreach::foreach(i = seq_along(cluster_list), .combine = rbind) %dopar% {
+  cluster_data_frame <- do.call(rbind, BiocParallel::bplapply(seq_along(cluster_list), function(i) {
       temp_df <- cluster_list[[i]]
       temp_adds <- unlist(cluster_properties[i,])
       temp_adds <- data.frame(matrix(rep(temp_adds, times = nrow(temp_df)), nrow = nrow(temp_df), byrow = TRUE), stringsAsFactors = FALSE)
@@ -156,7 +156,8 @@ plotNetwork <- function(clustering_output = NULL,
       temp_df <- cbind(temp_adds, temp_df)
 
       return(temp_df)
-  }, stringsAsFactors = FALSE)
+  }, BPPARAM = BPPARAM))
+  cluster_data_frame <- data.frame(cluster_data_frame, stringsAsFactors = FALSE)
   cluster_data_frame[] <- lapply(cluster_data_frame, as.character)
   for(i in seq_len(ncol(cluster_data_frame))){
     if(suppressWarnings(any(is.na(as.numeric(cluster_data_frame[,i])))) == FALSE) cluster_data_frame[,i] <- as.numeric(cluster_data_frame[,i])
@@ -195,8 +196,7 @@ plotNetwork <- function(clustering_output = NULL,
       if("TRBV" %in% colnames(cluster_data_frame)) vgene.info <- TRUE
 
       ### Get connections between different tuples consisting of CDR3b sequence, v gene and donor
-      x <- NULL
-      clone_network <- foreach::foreach(x = seq_len(nrow(ori_clone_net))) %dopar% {
+      clone_network <- BiocParallel::bplapply(seq_len(nrow(ori_clone_net)), function(x) {
         # Identify all tuples with correpsonding CDR3b sequence
         act_ids1 <- cluster_data_frame$ID[cluster_data_frame$CDR3b == ori_clone_net[x,1]]
         act_ids2 <- cluster_data_frame$ID[cluster_data_frame$CDR3b == ori_clone_net[x,2]]
@@ -220,9 +220,8 @@ plotNetwork <- function(clustering_output = NULL,
           var_ret <- data.frame(comb_ids, stringsAsFactors = FALSE)
           var_ret <- cbind(var_ret, rep(ori_clone_net[x,3], nrow(var_ret)))
           return(unlist(t(var_ret)))
-          t(var_ret)
         } else return(NULL)
-      }
+      }, BPPARAM = BPPARAM)
       clone_network <- data.frame(matrix(unlist(clone_network), ncol = 3, byrow = TRUE), stringsAsFactors = FALSE)
       colnames(clone_network) <- c("from", "to", "label")
       clone_network$from <- as.numeric(clone_network$from)
@@ -233,7 +232,7 @@ plotNetwork <- function(clustering_output = NULL,
       ### local connections
       if(parameters$local_similarities == TRUE){
         ### Get local connections between different tuples consisting of CDR3b sequence, v gene and donor
-        local_clone_network <- foreach::foreach(i = which(cluster_properties$type == "local")) %dopar% {
+        local_clone_network <- BiocParallel::bplapply(which(cluster_properties$type == "local"), function(i) {
 
           # Get IDs, members and details of current cluster
           temp_ids <- cluster_data_frame$ID[cluster_data_frame$tag == cluster_properties$tag[i]]
@@ -270,7 +269,7 @@ plotNetwork <- function(clustering_output = NULL,
           temp_df <- temp_df[cluster_data_frame$tag[temp_df$from] == cluster_data_frame$tag[temp_df$to],]
           temp_df <- t(temp_df)
           return(unlist(temp_df))
-        }
+        }, BPPARAM = BPPARAM)
 
         ### If available, set clone network to the local network
         if(length(local_clone_network) == 0) parameters$local_similarities == FALSE else {
@@ -290,7 +289,7 @@ plotNetwork <- function(clustering_output = NULL,
         BlosumVec <- .get_blosum_vec()
 
         ### Get local connections between different tuples consisting of CDR3b sequence, v gene and donor
-        global_clone_network <- foreach::foreach(i = which(cluster_properties$type == "global")) %dopar% {
+        global_clone_network <- BiocParallel::bplapply(which(cluster_properties$type == "global"), function(i) {
 
           # Get IDs and members of current cluster
           temp_ids <- cluster_data_frame$ID[cluster_data_frame$tag == cluster_properties$tag[i]]
@@ -314,7 +313,7 @@ plotNetwork <- function(clustering_output = NULL,
           }
           temp_df <- t(temp_df)
           return(unlist(temp_df))
-        }
+        }, BPPARAM = BPPARAM)
         if(parameters$all_aa_interchangeable == FALSE) message("Restrict global connections to sequences with a BLOSUM62 value for the amino acid substitution greater or equal to zero.")
 
         ### Append global network to the clone network
@@ -348,8 +347,7 @@ plotNetwork <- function(clustering_output = NULL,
       if("TRBV" %in% colnames(cluster_data_frame)) vgene.info <- TRUE
 
       ### Get connections between different tuples consisting of CDR3b sequence, v gene and donor
-      x <- NULL
-      clone_network <- foreach::foreach(x = seq_len(nrow(ori_clone_net))) %dopar% {
+      clone_network <- BiocParallel::bplapply(seq_len(nrow(ori_clone_net)), function(x) {
         # Identify all tuples with correpsonding CDR3b sequence
         act_ids1 <- cluster_data_frame$ID[cluster_data_frame$CDR3b == ori_clone_net[x,1]]
         act_ids2 <- cluster_data_frame$ID[cluster_data_frame$CDR3b == ori_clone_net[x,2]]
@@ -373,9 +371,8 @@ plotNetwork <- function(clustering_output = NULL,
           var_ret <- data.frame(comb_ids, stringsAsFactors = FALSE)
           var_ret <- cbind(var_ret, rep(ori_clone_net[x,3], nrow(var_ret)))
           return(unlist(t(var_ret)))
-          t(var_ret)
         } else return(NULL)
-      }
+      }, BPPARAM = BPPARAM)
       if(parameters$positional_motifs == TRUE) message("Restrict local similarities to sequences with identical N-terminal motif position.")
       if(parameters$public_tcrs == FALSE && patient.info == TRUE) message("Restrict similarities to sequences obtained from identical donor.")
       if(parameters$global_vgene == TRUE && vgene.info == TRUE) message("Restrict global similarities to sequences with identical v gene.")
@@ -390,7 +387,7 @@ plotNetwork <- function(clustering_output = NULL,
       ### local connections
       if(parameters$local_similarities == TRUE){
         ### Get local connections between different tuples consisting of CDR3b sequence, v gene and donor
-        local_clone_network <- foreach::foreach(i = which(cluster_properties$type == "local")) %dopar% {
+        local_clone_network <- BiocParallel::bplapply(which(cluster_properties$type == "local"), function(i) {
 
           # Get IDs, members and details of current cluster
           temp_ids <- cluster_data_frame$ID[cluster_data_frame$tag == cluster_properties$tag[i]]
@@ -427,7 +424,7 @@ plotNetwork <- function(clustering_output = NULL,
           temp_df <- temp_df[cluster_data_frame$tag[temp_df$from] == cluster_data_frame$tag[temp_df$to],]
           temp_df <- t(temp_df)
           return(unlist(temp_df))
-        }
+        }, BPPARAM = BPPARAM)
 
         ### If available, set clone network to the local network
         if(length(local_clone_network) == 0) parameters$local_similarities == FALSE else {
@@ -447,7 +444,7 @@ plotNetwork <- function(clustering_output = NULL,
         BlosumVec <- .get_blosum_vec()
 
         ### Get local connections between different tuples consisting of CDR3b sequence, v gene and donor
-        global_clone_network <- foreach::foreach(i = which(cluster_properties$type == "global")) %dopar% {
+        global_clone_network <- BiocParallel::bplapply(which(cluster_properties$type == "global"), function(i) {
 
           # Get IDs and members of current cluster
           temp_ids <- cluster_data_frame$ID[cluster_data_frame$tag == cluster_properties$tag[i]]
@@ -471,7 +468,7 @@ plotNetwork <- function(clustering_output = NULL,
           }
           temp_df <- t(temp_df)
           return(unlist(temp_df))
-        }
+        }, BPPARAM = BPPARAM)
         if(parameters$all_aa_interchangeable == FALSE) message("Restrict global connections to sequences with a BLOSUM62 value for the amino acid substitution greater or equal to zero.")
 
         ### Append global network to the clone network
@@ -699,8 +696,6 @@ plotNetwork <- function(clustering_output = NULL,
     if(color.scale == "log") leg.info[,1] <- paste0("10^(", round(leg.info[,1], digits = 3), ")") else leg.info[,1] <- as.character(round(leg.info[,1], digits = 5))
     lenodes <- data.frame(label = leg.info[,1], color = leg.info[,2], shape="dot", size=10)
   }
-
-  .stop_parallel()
 
   message("Drawing the graph.")
 

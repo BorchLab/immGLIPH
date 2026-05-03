@@ -96,7 +96,6 @@
 #' @references Glanville, Jacob, et al.
 #' "Identifying specificity groups in the T cell receptor repertoire." Nature 547.7661 (2017): 94.
 #' @references https://github.com/immunoengineer/gliph
-#' @import foreach
 #' @export
 deNovoTCRs <- function(convergence_group_tag,
                          result_folder = "",
@@ -116,66 +115,66 @@ deNovoTCRs <- function(convergence_group_tag,
   ##################################################################
 
   ### convergence_group_tag
-  if(!is.character(convergence_group_tag)) stop("convergence_group_tag has to be a character object")
-  if(length(convergence_group_tag) > 1) stop("convergence_group_tag has to be a single character string")
+  if (!is.character(convergence_group_tag)) stop("convergence_group_tag has to be a character object")
+  if (length(convergence_group_tag) > 1) stop("convergence_group_tag has to be a single character string")
 
   ### result_folder and clustering_output
-  if(!is.character(result_folder)) stop("result_folder has to be a character object")
-  if(length(result_folder) > 1) stop("result_folder has to be a single path")
+  if (!is.character(result_folder)) stop("result_folder has to be a character object")
+  if (length(result_folder) > 1) stop("result_folder has to be a single path")
   save_results <- FALSE
-  if(result_folder != ""){
-    if(substr(result_folder,nchar(result_folder),nchar(result_folder)) != "/") result_folder <- paste0(result_folder,"/")
+  if (result_folder != "") {
+    if (substr(result_folder, nchar(result_folder), nchar(result_folder)) != "/") result_folder <- paste0(result_folder, "/")
     if (!dir.exists(result_folder)) dir.create(result_folder)
     save_results <- TRUE
   } else {
-    if(!is.list(clustering_output)) stop("If 'result_folder' = \"\" the output list of clustering must be given by 'clustering_output'.")
+    if (!is.list(clustering_output)) stop("If 'result_folder' = \"\" the output list of clustering must be given by 'clustering_output'.")
   }
   ### refdb_beta
   # if(!(refdb_beta %in% c("gliph_reference", "human_v1.0_CD4", "human_v1.0_CD8", "human_v1.0_CD48", "human_v2.0_CD4",
   #                        "human_v2.0_CD8", "human_v2.0_CD48", "mouse_v1.0_CD4", "mouse_v1.0_CD8", "mouse_v1.0_CD48")) &&
   #    !is.data.frame(refdb_beta)){
-  if(!is.data.frame(refdb_beta)){
-    if(length(refdb_beta) != 1 || !is.character(refdb_beta)){
+  if (!is.data.frame(refdb_beta)) {
+    if (length(refdb_beta) != 1 || !is.character(refdb_beta)) {
       stop("refdb_beta has to be a data frame (containing CDR3b sequences in the first column and optional V-gene information in the second column) or the value 'gliph_reference'")
-    } else if(!(refdb_beta %in% c("gliph_reference"))){
+    } else if (!(refdb_beta %in% c("gliph_reference"))) {
       stop("refdb_beta has to be a data frame (containing CDR3b sequences in the first column and optional V-gene information in the second column) or the value 'gliph_reference'")
     }
   }
 
   ### accept_sequences_with_C_F_start_end
-  if(!is.logical(accept_sequences_with_C_F_start_end)) stop("accept_sequences_with_C_F_start_end has to be logical")
+  if (!is.logical(accept_sequences_with_C_F_start_end)) stop("accept_sequences_with_C_F_start_end has to be logical")
 
   ### normalization
-  if(!is.logical(normalization)) stop("normalization has to be logical")
+  if (!is.logical(normalization)) stop("normalization has to be logical")
 
   ### sims
-  if(!is.numeric(sims)) stop("sims has to be numeric")
-  if(length(sims) > 1) stop("sims has to be a single number")
-  if(sims < 1) stop("sims must be at least 1")
+  if (!is.numeric(sims)) stop("sims has to be numeric")
+  if (length(sims) > 1) stop("sims has to be a single number")
+  if (sims < 1) stop("sims must be at least 1")
   sims <- round(sims)
 
   ### num_tops
-  if(!is.numeric(num_tops)) stop("num_tops has to be numeric")
-  if(length(num_tops) > 1) stop("num_tops has to be a single number")
-  if(num_tops < 1) stop("num_tops must be at least 1")
+  if (!is.numeric(num_tops)) stop("num_tops has to be numeric")
+  if (length(num_tops) > 1) stop("num_tops has to be a single number")
+  if (num_tops < 1) stop("num_tops must be at least 1")
   num_tops <- round(num_tops)
 
   ### min_length
-  if(!is.numeric(min_length)) stop("min_length has to be numeric")
-  if(length(min_length) > 1) stop("min_length has to be a single number")
-  if(min_length < 1) stop("min_length must be at least 1")
+  if (!is.numeric(min_length)) stop("min_length has to be numeric")
+  if (length(min_length) > 1) stop("min_length has to be a single number")
+  if (min_length < 1) stop("min_length must be at least 1")
   min_length <- round(min_length)
 
   ### make_figure
-  if(!is.logical(make_figure)) stop("make_figure has to be logical")
+  if (!is.logical(make_figure)) stop("make_figure has to be logical")
 
   ### n_cores
-  if(is.null(n_cores)) n_cores <- max(1, parallel::detectCores()-2) else {
-    if(!is.numeric(n_cores)) stop("n_cores has to be numeric")
-    if(length(n_cores) > 1) stop("n_cores has to be a single number")
-    if(n_cores < 1) stop("n_cores must be at least 1")
+  if (is.null(n_cores)) n_cores <- max(1, parallel::detectCores() - 2) else {
+    if (!is.numeric(n_cores)) stop("n_cores has to be numeric")
+    if (length(n_cores) > 1) stop("n_cores has to be a single number")
+    if (n_cores < 1) stop("n_cores must be at least 1")
 
-    n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
+    n_cores <- max(1, min(n_cores, parallel::detectCores() - 2))
   }
 
   # Amino acids one letter code
@@ -187,22 +186,22 @@ deNovoTCRs <- function(convergence_group_tag,
 
   ### load convergence groups from file or from input and only use specified convergence group
   message("Loading convergence group with tag ", convergence_group_tag, ".")
-  if(is.null(clustering_output)){
+  if (is.null(clustering_output)) {
     clustering_output <- loadGLIPH(result_folder = result_folder)
     crg <- clustering_output$cluster_list
   } else {
     clustering_output <- clustering_output
     crg <- clustering_output$cluster_list
   }
-  if(!(convergence_group_tag %in% names(crg))) stop("Could not find convergence group with tag ",convergence_group_tag, " in clustering results stored in", result_folder, ".")
+  if (!(convergence_group_tag %in% names(crg))) stop("Could not find convergence group with tag ", convergence_group_tag, " in clustering results stored in", result_folder, ".")
   crg <- crg[[convergence_group_tag]]
   all_crg_cdr3_seqs <- crg$CDR3b
 
   ### Filter sequences for a minimun sequenc length
   excluded <- which(nchar(all_crg_cdr3_seqs) < min_length)
-  if(length(excluded) > 0){
+  if (length(excluded) > 0) {
     all_crg_cdr3_seqs <- all_crg_cdr3_seqs[-excluded]
-    if(length(all_crg_cdr3_seqs) > 0){
+    if (length(all_crg_cdr3_seqs) > 0) {
       warning(length(excluded), " sequences of the convergence group were excluded from the further procedure due to falling below a minimum length of ", min_length, ".", call. = FALSE)
     } else {
       stop("No sequences of the convergence group are of minimum length of ", min_length, ". For further procedure, adjust the parameter 'min_length'")
@@ -214,7 +213,7 @@ deNovoTCRs <- function(convergence_group_tag,
   #################################################################
 
   ### Initiate parallelization
-  .setup_parallel(n_cores)
+  BPPARAM <- .setup_parallel(n_cores)
 
   # get all sequences in cluster
   crg_cdr3_seqs <- all_crg_cdr3_seqs
@@ -224,31 +223,31 @@ deNovoTCRs <- function(convergence_group_tag,
   ref_vgenes <- c()
   refseqs <- c()
   v_gene_norm <- normalization
-  if(normalization == TRUE){
+  if (normalization == TRUE) {
 
-    if(is.data.frame(refdb_beta)) {
+    if (is.data.frame(refdb_beta)) {
       refseqs <- refdb_beta
       refseqs[] <- lapply(refseqs, as.character)
 
-      if(ncol(refseqs) > 1){
+      if (ncol(refseqs) > 1) {
         message("Notification: First column of reference database is considered as cdr3 sequences.")
       }
-      if(ncol(refseqs) > 1 && v_gene_norm == TRUE){
+      if (ncol(refseqs) > 1 && v_gene_norm == TRUE) {
         message("Notification: Second column of reference database is considered as V-gene information.")
-      } else if(v_gene_norm == TRUE){
+      } else if (v_gene_norm == TRUE) {
         warning("Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.", call. = FALSE)
         v_gene_norm <- FALSE
       }
-      if(ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
+      if (ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
 
-      refseqs <- refseqs[, c(1,2)]
+      refseqs <- refseqs[, c(1, 2)]
       colnames(refseqs) <- c("CDR3b", "TRBV")
       refseqs <- unique(refseqs)
-      if(accept_sequences_with_C_F_start_end) refseqs <- refseqs[grep(pattern = "^C.*F$",x = refseqs$CDR3b,perl = TRUE),]
-      refseqs <- refseqs[which(nchar(refseqs$CDR3b) >= min_length),]
-      refseqs <- refseqs[grep("^[ACDEFGHIKLMNOPQRSTUVWY]*$", refseqs$CDR3b),]
+      if (accept_sequences_with_C_F_start_end) refseqs <- refseqs[grep(pattern = "^C.*F$", x = refseqs$CDR3b, perl = TRUE), ]
+      refseqs <- refseqs[which(nchar(refseqs$CDR3b) >= min_length), ]
+      refseqs <- refseqs[grep("^[ACDEFGHIKLMNOPQRSTUVWY]*$", refseqs$CDR3b), ]
 
-      if(nrow(refseqs) == 0){
+      if (nrow(refseqs) == 0) {
         normalization <- FALSE
         v_gene_norm <- FALSE
         warning("No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.", call. = FALSE)
@@ -258,29 +257,29 @@ deNovoTCRs <- function(convergence_group_tag,
       }
     } else {
       reference_list <- NULL
-      utils::data("reference_list",envir = environment(), package = "immGLIPH")
+      utils::data("reference_list", envir = environment(), package = "immGLIPH")
       refseqs <- as.data.frame(reference_list[[refdb_beta]]$refseqs)
       refseqs[] <- lapply(refseqs, as.character)
 
-      if(ncol(refseqs) > 1){
+      if (ncol(refseqs) > 1) {
         message("Notification: First column of reference database is considered as cdr3 sequences.")
       }
-      if(ncol(refseqs) > 1 && v_gene_norm == TRUE){
+      if (ncol(refseqs) > 1 && v_gene_norm == TRUE) {
         message("Notification: Second column of reference database is considered as V-gene information.")
-      } else if(v_gene_norm == TRUE){
+      } else if (v_gene_norm == TRUE) {
         warning("Beta sequence reference database is missing column containing V-genes. Without V-gene information normalization may be inaccurate.", call. = FALSE)
         v_gene_norm <- FALSE
       }
-      if(ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
+      if (ncol(refseqs) == 1) refseqs <- cbind(refseqs, rep("", nrow(refseqs)))
 
-      refseqs <- refseqs[, c(1,2)]
+      refseqs <- refseqs[, c(1, 2)]
       colnames(refseqs) <- c("CDR3b", "TRBV")
       refseqs <- unique(refseqs)
-      if(accept_sequences_with_C_F_start_end) refseqs <- refseqs[grep(pattern = "^C.*F$",x = refseqs$CDR3b,perl = TRUE),]
-      refseqs <- refseqs[which(nchar(refseqs$CDR3b) >= min_length),]
-      refseqs <- refseqs[grep("^[ACDEFGHIKLMNPQRSTVWY]*$", refseqs$CDR3b),]
+      if (accept_sequences_with_C_F_start_end) refseqs <- refseqs[grep(pattern = "^C.*F$", x = refseqs$CDR3b, perl = TRUE), ]
+      refseqs <- refseqs[which(nchar(refseqs$CDR3b) >= min_length), ]
+      refseqs <- refseqs[grep("^[ACDEFGHIKLMNPQRSTVWY]*$", refseqs$CDR3b), ]
 
-      if(nrow(refseqs) == 0){
+      if (nrow(refseqs) == 0) {
         normalization <- FALSE
         v_gene_norm <- FALSE
         warning("No reference sequences with a minimum length of ", min_length, " given. Normalization therefore not possible. Adjust min_length to enable normalization.", call. = FALSE)
@@ -291,9 +290,9 @@ deNovoTCRs <- function(convergence_group_tag,
     }
 
     # load V genes of cluster members
-    if("TRBV" %in% colnames(crg) && v_gene_norm == TRUE){
+    if ("TRBV" %in% colnames(crg) && v_gene_norm == TRUE) {
       v_genes <- crg$TRBV
-    } else if(v_gene_norm == TRUE){
+    } else if (v_gene_norm == TRUE) {
       v_gene_norm <- FALSE
       warning("Without V-gene information of sample sequences normalization may be inaccurate.", call. = FALSE)
     } else warning("Without V-gene restriction normalization may be inaccurate.", call. = FALSE)
@@ -310,22 +309,22 @@ deNovoTCRs <- function(convergence_group_tag,
   message("Calculating positional weight matrix of convergence group.")
 
   # initialize the matrix
-  crg_pwm_scoring <- as.data.frame(matrix(rep(0, min_length*length(aa_code)), ncol = length(aa_code)))
+  crg_pwm_scoring <- as.data.frame(matrix(rep(0, min_length * length(aa_code)), ncol = length(aa_code)))
   colnames(crg_pwm_scoring) <- aa_code
 
   # for every position determine the amino acid frequency
-  for(i in seq_len(nrow(crg_pwm_scoring))){
+  for (i in seq_len(nrow(crg_pwm_scoring))) {
     aa_freqs <- rep(0, length(aa_code))
     act_letters <- substr(crg_cdr3_seqs, i, i)
-    for(j in seq_along(aa_freqs)){
+    for (j in seq_along(aa_freqs)) {
       aa_freqs[j] <- sum(act_letters == aa_code[j])
     }
 
     # Pseudocounts of 0.5% per aa
     zeroFreqs <- which(aa_freqs == 0)
-    aa_freqs <- aa_freqs/sum(aa_freqs)*(1-length(zeroFreqs)*0.005)
+    aa_freqs <- aa_freqs / sum(aa_freqs) * (1 - length(zeroFreqs) * 0.005)
     aa_freqs[zeroFreqs] <- 0.005
-    crg_pwm_scoring[i,] <- aa_freqs
+    crg_pwm_scoring[i, ] <- aa_freqs
   }
 
   ### Calculate scores of convergence group members, only use first min_length N-terminal positions
@@ -333,61 +332,58 @@ deNovoTCRs <- function(convergence_group_tag,
   message("Calculating scores of convergence group members.")
 
   # is parallelization necessary?
-  if(crg_num_seqs > 10000){
+  if (crg_num_seqs > 10000) {
     # distribute sequences equally to all cores
-    distribute <- lapply(seq_len(n_cores), function(x){return(((x-1)*floor(length(crg_cdr3_seqs)/n_cores)+1):(x*floor(length(crg_cdr3_seqs)/n_cores)))})
+    distribute <- lapply(seq_len(n_cores), function(x) {return(((x - 1) * floor(length(crg_cdr3_seqs) / n_cores) + 1):(x * floor(length(crg_cdr3_seqs) / n_cores)))})
 
     # calculate the score
-    crg_cdr3_scores <- foreach::foreach(i = seq_along(distribute), .combine = c) %dopar% {
-      temp_scores <- rep(1, length(distribute[[i]]))
-      temp_seqs <- crg_cdr3_seqs[distribute[[i]]]
-      for(i in seq_len(nrow(crg_pwm_scoring))){
-        temp_scores <- temp_scores*unlist(crg_pwm_scoring[i, substr(temp_seqs, i, i)])
+    crg_cdr3_scores <- unlist(BiocParallel::bplapply(seq_along(distribute), function(idx) {
+      temp_scores <- rep(1, length(distribute[[idx]]))
+      temp_seqs <- crg_cdr3_seqs[distribute[[idx]]]
+      for (k in seq_len(nrow(crg_pwm_scoring))) {
+        temp_scores <- temp_scores * unlist(crg_pwm_scoring[k, substr(temp_seqs, k, k)])
       }
-
-      return(temp_scores)
-    }
+      temp_scores
+    }, BPPARAM = BPPARAM))
   } else {
     # calculate the score
-    for(i in seq_len(nrow(crg_pwm_scoring))){
-      crg_cdr3_scores <- crg_cdr3_scores*unlist(crg_pwm_scoring[i, substr(crg_cdr3_seqs, i, i)])
+    for (i in seq_len(nrow(crg_pwm_scoring))) {
+      crg_cdr3_scores <- crg_cdr3_scores * unlist(crg_pwm_scoring[i, substr(crg_cdr3_seqs, i, i)])
     }
   }
 
   ### Normalize scores of convergence group members, only use first 10 N-terminal positions
   # calculate the probability that a score at least this high occurs in the reference database
-  if(normalization == TRUE){
+  if (normalization == TRUE) {
     message("Normalizing scores of convergence group members.")
 
     # Calculate scores of reference database (analogue to sample sequences)
     refseq_scores <- rep(1, length(refseqs))
-    if(length(refseqs) > 10000){
-      distribute <- lapply(seq_len(n_cores), function(x){return(((x-1)*floor(length(refseqs)/n_cores)+1):(x*floor(length(refseqs)/n_cores)))})
+    if (length(refseqs) > 10000) {
+      distribute <- lapply(seq_len(n_cores), function(x) {return(((x - 1) * floor(length(refseqs) / n_cores) + 1):(x * floor(length(refseqs) / n_cores)))})
 
-      refseq_scores <- foreach::foreach(i = seq_along(distribute), .combine = c) %dopar% {
-        temp_scores <- rep(1, length(distribute[[i]]))
-        temp_seqs <- refseqs[distribute[[i]]]
-        for(i in seq_len(nrow(crg_pwm_scoring))){
-          temp_scores <- temp_scores*unlist(crg_pwm_scoring[i, substr(temp_seqs, i, i)])
+      refseq_scores <- unlist(BiocParallel::bplapply(seq_along(distribute), function(idx) {
+        temp_scores <- rep(1, length(distribute[[idx]]))
+        temp_seqs <- refseqs[distribute[[idx]]]
+        for (k in seq_len(nrow(crg_pwm_scoring))) {
+          temp_scores <- temp_scores * unlist(crg_pwm_scoring[k, substr(temp_seqs, k, k)])
         }
-
-        return(temp_scores)
-      }
+        temp_scores
+      }, BPPARAM = BPPARAM))
     } else {
-      for(i in seq_len(nrow(crg_pwm_scoring))){
-        refseq_scores <- refseq_scores*unlist(crg_pwm_scoring[i, substr(refseqs, i, i)])
+      for (i in seq_len(nrow(crg_pwm_scoring))) {
+        refseq_scores <- refseq_scores * unlist(crg_pwm_scoring[i, substr(refseqs, i, i)])
       }
     }
 
     # Calculate normalized scores, if requested restrict score comparison to identical V genes
-    crg_cdr3_norm_scores <- foreach::foreach(i = seq_len(crg_num_seqs), .combine = c) %dopar% {
+    crg_cdr3_norm_scores <- unlist(BiocParallel::bplapply(seq_len(crg_num_seqs), function(idx) {
       v_gene_penalty <- rep(0, length(refseqs))
-      if(v_gene_norm == TRUE){
-        v_gene_penalty[ref_vgenes != v_genes[i]] <- -2
+      if (v_gene_norm) {
+        v_gene_penalty[ref_vgenes != v_genes[idx]] <- -2
       }
-
-      return(sum((refseq_scores + v_gene_penalty) >= crg_cdr3_scores[i])/length(refseqs))
-    }
+      sum((refseq_scores + v_gene_penalty) >= crg_cdr3_scores[idx]) / length(refseqs)
+    }, BPPARAM = BPPARAM))
   }
 
   ### Create global PWM of convergence group
@@ -397,33 +393,33 @@ deNovoTCRs <- function(convergence_group_tag,
   crg_pwm_predicting_list <- list()
 
   # get the probability of this CDR3b length to occur
-  crg_len_prob <- data.frame(length = unique(crg_cdr3_lens),probability = rep(0, length(unique(crg_cdr3_lens))))
-  for(i in seq_len(nrow(crg_len_prob))){
-    crg_len_prob$probability[i] <- sum(crg_cdr3_lens == crg_len_prob$length[i])/crg_num_seqs
+  crg_len_prob <- data.frame(length = unique(crg_cdr3_lens), probability = rep(0, length(unique(crg_cdr3_lens))))
+  for (i in seq_len(nrow(crg_len_prob))) {
+    crg_len_prob$probability[i] <- sum(crg_cdr3_lens == crg_len_prob$length[i]) / crg_num_seqs
   }
 
   # receive the positional dependent amino acid frequencies for every CDR3b length
-  for(len in unique(crg_cdr3_lens)){
-    crg_pwm_predicting <- as.data.frame(matrix(rep(0,len*length(aa_code)), ncol = length(aa_code)))
+  for (len in unique(crg_cdr3_lens)) {
+    crg_pwm_predicting <- as.data.frame(matrix(rep(0, len * length(aa_code)), ncol = length(aa_code)))
     colnames(crg_pwm_predicting) <- aa_code
 
     seqs <- crg_cdr3_seqs[crg_cdr3_lens == len]
-    for(i in seq_len(len)){
+    for (i in seq_len(len)) {
       aa_freqs <- rep(0, length(aa_code))
       act_letters <- substr(seqs, i, i)
-      for(j in seq_along(aa_freqs)){
+      for (j in seq_along(aa_freqs)) {
         aa_freqs[j] <- sum(act_letters == aa_code[j])
       }
 
       # Pseudocounts of 0.5% per aa
       zeroFreqs <- which(aa_freqs == 0)
-      aa_freqs <- aa_freqs/sum(aa_freqs)*(1-length(zeroFreqs)*0.005)
+      aa_freqs <- aa_freqs / sum(aa_freqs) * (1 - length(zeroFreqs) * 0.005)
       aa_freqs[zeroFreqs] <- 0.005
-      crg_pwm_predicting[i,] <- aa_freqs
+      crg_pwm_predicting[i, ] <- aa_freqs
     }
 
     # if de novo sequences should only start with C and end with F, correct the PWM for this positions
-    if(accept_sequences_with_C_F_start_end == TRUE){
+    if (accept_sequences_with_C_F_start_end == TRUE) {
       crg_pwm_predicting[1, ] <- rep(0, ncol(crg_pwm_predicting))
       crg_pwm_predicting[nrow(crg_pwm_predicting), ] <- rep(0, ncol(crg_pwm_predicting))
       crg_pwm_predicting$'C'[1] <- 1
@@ -438,74 +434,73 @@ deNovoTCRs <- function(convergence_group_tag,
   message("Creating ", sims, " de novo sequences.")
 
   # randomly select the length of the sequences
-  de_novo_lens <- sample(x = c(crg_len_prob$length, 0), size = sims, prob = c(crg_len_prob$probability,0), replace = TRUE)
+  de_novo_lens <- sample(x = c(crg_len_prob$length, 0), size = sims, prob = c(crg_len_prob$probability, 0), replace = TRUE)
   de_novo_seqs <- rep("", sims)
 
   # based on the PWM randomly create new sequences
-  for(len in crg_len_prob$length){
+  for (len in crg_len_prob$length) {
     inds <- which(de_novo_lens == len)
-    for(i in seq_len(len)){
-      rands <- aa_code[sample.int(n = length(aa_code), size = length(inds), prob = crg_pwm_predicting_list[[paste("Length", len)]][i,], replace = TRUE)]
+    for (i in seq_len(len)) {
+      rands <- aa_code[sample.int(n = length(aa_code), size = length(inds), prob = crg_pwm_predicting_list[[paste("Length", len)]][i, ], replace = TRUE)]
       de_novo_seqs[inds] <- paste(de_novo_seqs[inds], rands, sep = "")
     }
   }
   de_novo_seqs <- unique(de_novo_seqs)
-  if(accept_sequences_with_C_F_start_end) de_novo_seqs <- grep(pattern = "^C.*F$",x = de_novo_seqs ,perl = TRUE,value = TRUE)
+  if (accept_sequences_with_C_F_start_end) de_novo_seqs <- grep(pattern = "^C.*F$", x = de_novo_seqs, perl = TRUE, value = TRUE)
   de_novo_lens <- nchar(de_novo_seqs)
 
   # Score de_novo seqs as performed above
   message("Calculating scores of de novo sequences.")
   de_novo_seqs_scores <- rep(1, length(de_novo_seqs))
 
-  if(length(de_novo_seqs) > 10000){
-    distribute <- lapply(seq_len(n_cores), function(x){return(((x-1)*floor(length(de_novo_seqs)/n_cores)+1):(x*floor(length(de_novo_seqs)/n_cores)))})
+  if (length(de_novo_seqs) > 10000) {
+    distribute <- lapply(seq_len(n_cores), function(x) {return(((x - 1) * floor(length(de_novo_seqs) / n_cores) + 1):(x * floor(length(de_novo_seqs) / n_cores)))})
 
-    de_novo_seqs_scores <- foreach::foreach(i = seq_along(distribute), .combine = c) %dopar% {
-      temp_scores <- rep(1, length(distribute[[i]]))
-      temp_seqs <- de_novo_seqs[distribute[[i]]]
-      for(i in seq_len(nrow(crg_pwm_scoring))){
-        temp_scores <- temp_scores*unlist(crg_pwm_scoring[i, substr(temp_seqs, i, i)])
+    de_novo_seqs_scores <- unlist(BiocParallel::bplapply(seq_along(distribute), function(idx) {
+      temp_scores <- rep(1, length(distribute[[idx]]))
+      temp_seqs <- de_novo_seqs[distribute[[idx]]]
+      for (k in seq_len(nrow(crg_pwm_scoring))) {
+        temp_scores <- temp_scores * unlist(crg_pwm_scoring[k, substr(temp_seqs, k, k)])
       }
-
-      return(temp_scores)
-    }
+      temp_scores
+    }, BPPARAM = BPPARAM))
   } else {
-    for(i in seq_len(nrow(crg_pwm_scoring))){
-      de_novo_seqs_scores <- de_novo_seqs_scores*unlist(crg_pwm_scoring[i, substr(de_novo_seqs, i, i)])
+    for (i in seq_len(nrow(crg_pwm_scoring))) {
+      de_novo_seqs_scores <- de_novo_seqs_scores * unlist(crg_pwm_scoring[i, substr(de_novo_seqs, i, i)])
     }
   }
   de_novo_seqs_scores <- as.numeric(formatC(de_novo_seqs_scores, digits = 1, format = "e"))
 
   # Normalize de_novo seqs scores as performed above
-  if(normalization == TRUE){
+  if (normalization == TRUE) {
     message("Normalizing scores of de novo sequences.")
 
-    de_novo_norm_scores <- foreach::foreach(i = seq_along(de_novo_seqs), .combine = c) %dopar% {
-      return(sum(refseq_scores >= de_novo_seqs_scores[i])/length(refseqs))
-    }
+    de_novo_norm_scores <- unlist(BiocParallel::bplapply(seq_along(de_novo_seqs), function(idx) {
+      sum(refseq_scores >= de_novo_seqs_scores[idx]) / length(refseqs)
+    }, BPPARAM = BPPARAM))
     de_novo_norm_scores <- as.numeric(formatC(de_novo_norm_scores, digits = 1, format = "e"))
   }
 
   # sort sequences based on score (normalized scores are prioritized)
-  if(normalization == TRUE){
-    order_ids <- order(de_novo_norm_scores, decreasing=FALSE)
+  if (normalization == TRUE) {
+    order_ids <- order(de_novo_norm_scores, decreasing = FALSE)
     de_novo_seqs <- de_novo_seqs[order_ids]
     de_novo_lens <- de_novo_lens[order_ids]
     de_novo_seqs_scores <- de_novo_seqs_scores[order_ids]
     de_novo_norm_scores <- de_novo_norm_scores[order_ids]
-  } else{
-    order_ids <- order(de_novo_seqs_scores, decreasing=TRUE)
+  } else {
+    order_ids <- order(de_novo_seqs_scores, decreasing = TRUE)
     de_novo_seqs <- de_novo_seqs[order_ids]
     de_novo_lens <- de_novo_lens[order_ids]
     de_novo_seqs_scores <- de_novo_seqs_scores[order_ids]
   }
 
   # get num_tops heighest scored sequences
-  if(length(de_novo_seqs) < num_tops) num_tops <- length(de_novo_seqs)
+  if (length(de_novo_seqs) < num_tops) num_tops <- length(de_novo_seqs)
   de_novo_seqs <- de_novo_seqs[seq_len(num_tops)]
   de_novo_lens <- de_novo_lens[seq_len(num_tops)]
   de_novo_seqs_scores <- de_novo_seqs_scores[seq_len(num_tops)]
-  if(normalization == TRUE){
+  if (normalization == TRUE) {
     de_novo_norm_scores <- de_novo_norm_scores[seq_len(num_tops)]
     de_novo <- data.frame(length = de_novo_lens, seqs = de_novo_seqs, norm_score = de_novo_norm_scores, score = de_novo_seqs_scores)
   } else {
@@ -514,11 +509,11 @@ deNovoTCRs <- function(convergence_group_tag,
 
   ### sort cluster sequences based on their score
   connected_inds <- seq_along(crg_cdr3_seqs)
-  if(normalization == FALSE){
+  if (normalization == FALSE) {
     crg_cdr3_seqs <- crg_cdr3_seqs[order(crg_cdr3_scores, decreasing = TRUE)]
     connected_inds <- connected_inds[order(crg_cdr3_scores, decreasing = TRUE)]
     crg_cdr3_scores <- crg_cdr3_scores[order(crg_cdr3_scores, decreasing = TRUE)]
-  } else{
+  } else {
     crg_cdr3_seqs <- crg_cdr3_seqs[order(crg_cdr3_norm_scores, decreasing = FALSE)]
     connected_inds <- connected_inds[order(crg_cdr3_norm_scores, decreasing = FALSE)]
     crg_cdr3_scores <- crg_cdr3_scores[order(crg_cdr3_norm_scores, decreasing = FALSE)]
@@ -526,26 +521,26 @@ deNovoTCRs <- function(convergence_group_tag,
   }
 
   ### set all theoretical numeric values (actually characters) to numeric values
-  if(is.data.frame(de_novo)){
-    for(i in seq_len(ncol(de_novo))){
-      if(suppressWarnings(any(is.na(as.numeric(de_novo[,i])))) == FALSE) de_novo[,i] <- as.numeric(de_novo[,i])
+  if (is.data.frame(de_novo)) {
+    for (i in seq_len(ncol(de_novo))) {
+      if (suppressWarnings(any(is.na(as.numeric(de_novo[, i])))) == FALSE) de_novo[, i] <- as.numeric(de_novo[, i])
     }
   }
-  if(is.data.frame(crg_cdr3_scores)){
-    for(i in seq_len(ncol(crg_cdr3_scores))){
-      if(suppressWarnings(any(is.na(as.numeric(crg_cdr3_scores[,i])))) == FALSE) crg_cdr3_scores[,i] <- as.numeric(crg_cdr3_scores[,i])
+  if (is.data.frame(crg_cdr3_scores)) {
+    for (i in seq_len(ncol(crg_cdr3_scores))) {
+      if (suppressWarnings(any(is.na(as.numeric(crg_cdr3_scores[, i])))) == FALSE) crg_cdr3_scores[, i] <- as.numeric(crg_cdr3_scores[, i])
     }
   }
-  if(normalization == TRUE){
-    if(is.data.frame(crg_cdr3_norm_scores)){
-      for(i in seq_len(ncol(crg_cdr3_norm_scores))){
-        if(suppressWarnings(any(is.na(as.numeric(crg_cdr3_norm_scores[,i])))) == FALSE) crg_cdr3_norm_scores[,i] <- as.numeric(crg_cdr3_norm_scores[,i])
+  if (normalization == TRUE) {
+    if (is.data.frame(crg_cdr3_norm_scores)) {
+      for (i in seq_len(ncol(crg_cdr3_norm_scores))) {
+        if (suppressWarnings(any(is.na(as.numeric(crg_cdr3_norm_scores[, i])))) == FALSE) crg_cdr3_norm_scores[, i] <- as.numeric(crg_cdr3_norm_scores[, i])
       }
     }
   }
 
   ### output
-  if(normalization == FALSE){
+  if (normalization == FALSE) {
     output <- list(de_novo_sequences = de_novo, sample_sequences_scores = data.frame(seqs = all_crg_cdr3_seqs[connected_inds], scores = crg_cdr3_scores),
                          cdr3_length_probability = crg_len_prob, PWM_Scoring = crg_pwm_scoring, PWM_Prediction = crg_pwm_predicting_list)
   } else {
@@ -555,38 +550,35 @@ deNovoTCRs <- function(convergence_group_tag,
 
   ### save
   fname <- paste0(result_folder, convergence_group_tag, "_de_novo.txt")
-  if(save_results == TRUE) utils::write.table(x = de_novo,file = fname,quote = FALSE,sep = "\t",row.names = FALSE, col.names = TRUE)
-  if(save_results == TRUE) message("Output: results are stored in ", fname)
+  if (save_results == TRUE) utils::write.table(x = de_novo, file = fname, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+  if (save_results == TRUE) message("Output: results are stored in ", fname)
 
   ### Print a graph with num_tops best scoring de novo sequences
-  if(make_figure == TRUE){
-    if(normalization == FALSE){
-      graphics::plot(x = seq_len(num_tops), y = de_novo$score*100, xlab = paste("Top", num_tops, "predicted TCRs"), ylab = "TCR probability based on PWM in %", type = "p", log = "xy", col = "grey", pch = 19)
-      graphics::points(x = seq_len(10), y = de_novo$score[seq_len(10)]*100, col = "red", pch = 19)
+  if (make_figure == TRUE) {
+    if (normalization == FALSE) {
+      graphics::plot(x = seq_len(num_tops), y = de_novo$score * 100, xlab = paste("Top", num_tops, "predicted TCRs"), ylab = "TCR probability based on PWM in %", type = "p", log = "xy", col = "grey", pch = 19)
+      graphics::points(x = seq_len(10), y = de_novo$score[seq_len(10)] * 100, col = "red", pch = 19)
 
       # which cluster sequences are present in de novo created sequences?
       common_ids <- which(de_novo_seqs %in% crg_cdr3_seqs)
-      graphics::points(x = common_ids, y = de_novo_seqs_scores[common_ids]*100, col = "yellow", pch = 20)
-    } else{
-      graphics::plot(x = seq_len(num_tops), y = de_novo$norm_score *100, xlab = paste("Top", num_tops, "predicted TCRs"), ylab = "Normalized TCR probability based on PWM in %",
+      graphics::points(x = common_ids, y = de_novo_seqs_scores[common_ids] * 100, col = "yellow", pch = 20)
+    } else {
+      graphics::plot(x = seq_len(num_tops), y = de_novo$norm_score * 100, xlab = paste("Top", num_tops, "predicted TCRs"), ylab = "Normalized TCR probability based on PWM in %",
                     type = "p", log = "xy", col = "grey", pch = 19)
-      graphics::points(x = seq_len(10), y = de_novo$norm_score[seq_len(10)]*100, col = "red", pch = 19)
+      graphics::points(x = seq_len(10), y = de_novo$norm_score[seq_len(10)] * 100, col = "red", pch = 19)
 
       # which cluster sequences are present in de novo created sequences?
       common_ids <- which(de_novo_seqs %in% crg_cdr3_seqs)
-      graphics::points(x = common_ids, y = de_novo_norm_scores[common_ids]*100, col = "yellow", pch = 20)
+      graphics::points(x = common_ids, y = de_novo_norm_scores[common_ids] * 100, col = "yellow", pch = 20)
     }
 
-    graphics::legend("bottomleft", legend=c(paste0("Top ", num_tops," de novo scores"), "Top 10 de novo scores", "Convergence group members\nin de novo sequences"),
-           col=c("grey", "red", "yellow"), pch = c(19,19,20),title="Legend", cex = 0.75)
+    graphics::legend("bottomleft", legend = c(paste0("Top ", num_tops, " de novo scores"), "Top 10 de novo scores", "Convergence group members\nin de novo sequences"),
+           col = c("grey", "red", "yellow"), pch = c(19, 19, 20), title = "Legend", cex = 0.75)
   }
 
   t2 <- Sys.time()
-  dt <- (t2-t1)
+  dt <- (t2 - t1)
   message("Total time = ", dt, " ", units(dt))
-
-  .stop_parallel()
-
 
   ### Closing time!
   return(output)

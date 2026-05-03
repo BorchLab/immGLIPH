@@ -15,7 +15,7 @@
         if (!requireNamespace("immApex", quietly = TRUE)) {
             stop("The immApex package is required to extract TCR data from ",
                  class(input)[1], " objects.\n",
-                 "Install with: devtools::install_github('BorchLab/immApex')",
+                 "Install with: BiocManager::install('BorchLab/immApex')",
                  call. = FALSE)
         }
         ir_data <- immApex::getIR(
@@ -32,7 +32,7 @@
         if (!requireNamespace("immApex", quietly = TRUE)) {
             stop("The immApex package is required for list input from ",
                  "combineTCR/combineBCR.\n",
-                 "Install with: devtools::install_github('BorchLab/immApex')",
+                 "Install with: BiocManager::install('BorchLab/immApex')",
                  call. = FALSE)
         }
         ir_data <- immApex::getIR(

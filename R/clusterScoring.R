@@ -100,7 +100,6 @@
 #' @references Glanville, Jacob, et al.
 #' "Identifying specificity groups in the T cell receptor repertoire." Nature 547.7661 (2017): 94.
 #' @references https://github.com/immunoengineer/gliph
-#' @import foreach
 #' @export
 clusterScoring <- function(cluster_list,
                             cdr3_sequences,
@@ -111,85 +110,124 @@ clusterScoring <- function(cluster_list,
                             gliph_version = 1,
                             sim_depth = 1000,
                             hla_cutoff = 0.1,
-                            n_cores = 1){
+                            n_cores = 1) {
   ##################################################################
   ##                         Unit-testing                         ##
   ##################################################################
 
   ### cluster_list
-  if(!is.list(cluster_list)) stop("parameter 'cluster_list' has to be an object of class 'list'.")
+  if (!is.list(cluster_list)) {
+    stop("parameter 'cluster_list' has to be an object of class 'list'.")
+  }
 
   ### cdr3_sequences
-  if(is.atomic(cdr3_sequences)) cdr3_sequences <- data.frame("CDR3b" = cdr3_sequences)
-  if(!is.data.frame(cdr3_sequences)) stop("parameter 'cdr3_sequences' has to be an object of class 'data.frame'.")
+  if (is.atomic(cdr3_sequences)) {
+    cdr3_sequences <- data.frame("CDR3b" = cdr3_sequences)
+  }
+  if (!is.data.frame(cdr3_sequences)) {
+    stop("parameter 'cdr3_sequences' has to be an object of class 'data.frame'.")
+  }
   cdr3_sequences[] <- lapply(cdr3_sequences, as.character)
 
   ### refdb_beta
-  if(!is.data.frame(refdb_beta)){
+  if (!is.data.frame(refdb_beta)) {
     valid_names <- .valid_reference_names()
-    if(length(refdb_beta) != 1 || !is.character(refdb_beta)){
+    if (length(refdb_beta) != 1 || !is.character(refdb_beta)) {
       stop("refdb_beta must be a data frame or one of: ",
            paste(sQuote(valid_names), collapse = ", "))
-    } else if(!(refdb_beta %in% valid_names)){
+    } else if (!(refdb_beta %in% valid_names)) {
       stop("refdb_beta must be a data frame or one of: ",
            paste(sQuote(valid_names), collapse = ", "))
     }
   }
 
   ### v_usage_freq
-  if(!is.null(v_usage_freq)){
-    if(is.data.frame(v_usage_freq)){
-      if(ncol(v_usage_freq) < 2) stop("v_usage_freq has to be a data frame containing V-gene information in the first column and the corresponding frequency in a naive  T-cell repertoire in the second column.")
-      if(nrow(v_usage_freq) < 1) stop("v_usage_freq has to contain at least one row.")
-      if(suppressWarnings(any(is.na(as.numeric(v_usage_freq[,2])))) == TRUE){
-        stop("The second column of v_usage_freq must contain the frequency of the corresponding V-gene in the first column in a naive T-cell repertoire.")
-      } else v_usage_freq[,2] <- as.numeric(v_usage_freq[,2])
-
-    } else {stop("v_usage_freq has to be a data frame containing V-gene information in the first column and the corresponding frequency in a naive T-cell repertoire in the second column.")}
+  if (!is.null(v_usage_freq)) {
+    if (is.data.frame(v_usage_freq)) {
+      if (ncol(v_usage_freq) < 2) {
+        stop("v_usage_freq has to be a data frame containing V-gene ",
+             "information in the first column and the corresponding ",
+             "frequency in a naive T-cell repertoire in the second column.")
+      }
+      if (nrow(v_usage_freq) < 1) {
+        stop("v_usage_freq has to contain at least one row.")
+      }
+      if (suppressWarnings(any(is.na(as.numeric(v_usage_freq[, 2]))))) {
+        stop("The second column of v_usage_freq must contain the frequency ",
+             "of the corresponding V-gene in the first column in a naive ",
+             "T-cell repertoire.")
+      } else {
+        v_usage_freq[, 2] <- as.numeric(v_usage_freq[, 2])
+      }
+    } else {
+      stop("v_usage_freq has to be a data frame containing V-gene ",
+           "information in the first column and the corresponding ",
+           "frequency in a naive T-cell repertoire in the second column.")
+    }
   }
 
   ### cdr3_length_freq
-  if(!is.null(cdr3_length_freq)){
-    if(is.data.frame(cdr3_length_freq)){
-      if(ncol(cdr3_length_freq) < 2) stop("cdr3_length_freq has to be a data frame containing CDR3 lengths in the first column and the corresponding frequency in a naive  T-cell repertoire in the second column.")
-      if(nrow(cdr3_length_freq) < 1) stop("cdr3_length_freq has to contain at least one row.")
-      if(suppressWarnings(any(is.na(as.numeric(cdr3_length_freq[,2])))) == TRUE){
-        stop("The second column of cdr3_length_freq must contain the frequency of the corresponding CDR3 length in the first column in a naive T-cell repertoire.")
-      } else cdr3_length_freq[,2] <- as.numeric(cdr3_length_freq[,2])
-
-    } else {stop("cdr3_length_freq has to be a data frame containing CDR3 lengths in the first column and the corresponding frequency in a naive T-cell repertoire in the second column.")}
+  if (!is.null(cdr3_length_freq)) {
+    if (is.data.frame(cdr3_length_freq)) {
+      if (ncol(cdr3_length_freq) < 2) {
+        stop("cdr3_length_freq has to be a data frame containing CDR3 ",
+             "lengths in the first column and the corresponding frequency ",
+             "in a naive T-cell repertoire in the second column.")
+      }
+      if (nrow(cdr3_length_freq) < 1) {
+        stop("cdr3_length_freq has to contain at least one row.")
+      }
+      if (suppressWarnings(any(is.na(as.numeric(cdr3_length_freq[, 2]))))) {
+        stop("The second column of cdr3_length_freq must contain the ",
+             "frequency of the corresponding CDR3 length in the first ",
+             "column in a naive T-cell repertoire.")
+      } else {
+        cdr3_length_freq[, 2] <- as.numeric(cdr3_length_freq[, 2])
+      }
+    } else {
+      stop("cdr3_length_freq has to be a data frame containing CDR3 ",
+           "lengths in the first column and the corresponding frequency ",
+           "in a naive T-cell repertoire in the second column.")
+    }
   }
 
   ### ref_cluster_size
-  if(!(ref_cluster_size %in% c("original", "simulated") || !is.character(ref_cluster_size) || length(ref_cluster_size) > 1)){
+  if (!(ref_cluster_size %in% c("original", "simulated") ||
+        !is.character(ref_cluster_size) ||
+        length(ref_cluster_size) > 1)) {
     stop("ref_cluster_size has to be either 'original' or 'simulated'.")
   }
 
   ### gliph_version
-  if(!(gliph_version %in% c(1,2))) stop("gliph_version has to be either 1 or 2.")
+  if (!(gliph_version %in% c(1, 2))) {
+    stop("gliph_version has to be either 1 or 2.")
+  }
 
   ### sim_depth
-  if(!is.numeric(sim_depth)) stop("sim_depth has to be numeric")
-  if(length(sim_depth) > 1) stop("sim_depth has to be a single number")
-  if(sim_depth < 1) stop("sim_depth must be at least 1")
+  if (!is.numeric(sim_depth)) stop("sim_depth has to be numeric")
+  if (length(sim_depth) > 1) stop("sim_depth has to be a single number")
+  if (sim_depth < 1) stop("sim_depth must be at least 1")
   sim_depth <- round(sim_depth)
 
   ### hla_cutoff
-  if(!is.numeric(hla_cutoff)) stop("hla_cutoff has to be numeric")
-  if(length(hla_cutoff) > 1) stop("hla_cutoff has to be a single number")
-  if(hla_cutoff > 1 || hla_cutoff < 0) stop("hla_cutoff must be between 0 and 1")
+  if (!is.numeric(hla_cutoff)) stop("hla_cutoff has to be numeric")
+  if (length(hla_cutoff) > 1) stop("hla_cutoff has to be a single number")
+  if (hla_cutoff > 1 || hla_cutoff < 0) {
+    stop("hla_cutoff must be between 0 and 1")
+  }
 
   ### n_cores
-  if(is.null(n_cores)) n_cores <- max(1, parallel::detectCores()-2) else {
-    if(!is.numeric(n_cores)) stop("n_cores has to be numeric")
-    if(length(n_cores) > 1) stop("n_cores has to be a single number")
-    if(n_cores < 1) stop("n_cores must be at least 1")
-
-    n_cores <- max(1, min(n_cores, parallel::detectCores()-2))
+  if (is.null(n_cores)) {
+    n_cores <- max(1, parallel::detectCores() - 2)
+  } else {
+    if (!is.numeric(n_cores)) stop("n_cores has to be numeric")
+    if (length(n_cores) > 1) stop("n_cores has to be a single number")
+    if (n_cores < 1) stop("n_cores must be at least 1")
+    n_cores <- max(1, min(n_cores, parallel::detectCores() - 2))
   }
 
   ### Early return for empty cluster_list (after all validation)
-  if(length(cluster_list) == 0) {
+  if (length(cluster_list) == 0) {
     message("No clusters to score.")
     return(data.frame())
   }
@@ -199,62 +237,71 @@ clusterScoring <- function(cluster_list,
   #################################################################
 
   ### Which scores can be calculated from the dataset?
-  score_names <- c("network.size.score","cdr3.length.score")
-  if("TRBV" %in% colnames(cdr3_sequences)){
+  score_names <- c("network.size.score", "cdr3.length.score")
+  if ("TRBV" %in% colnames(cdr3_sequences)) {
     vgene_info <- TRUE
     score_names <- c(score_names, "vgene.score")
-  } else vgene_info <- FALSE
-  if("counts" %in% colnames(cdr3_sequences)) {
+  } else {
+    vgene_info <- FALSE
+  }
+  if ("counts" %in% colnames(cdr3_sequences)) {
     counts_info <- TRUE
     cdr3_sequences$counts <- as.numeric(cdr3_sequences$counts)
     cdr3_sequences$counts[is.na(cdr3_sequences$counts)] <- 1
     score_names <- c(score_names, "clonal.expansion.score")
-  } else counts_info <- FALSE
-  if("patient" %in% colnames(cdr3_sequences)) patient_info <- TRUE else patient_info <- FALSE
-  if("HLA" %in% colnames(cdr3_sequences)) hla_info <- TRUE else hla_info <- FALSE
-  if(hla_info == TRUE && patient_info == TRUE){
-    if("patient" %in% colnames(cdr3_sequences) && "HLA" %in% colnames(cdr3_sequences)){
-      cdr3_sequences <- cdr3_sequences[cdr3_sequences$HLA != "" & !is.na(cdr3_sequences$HLA),]
-      if(nrow(cdr3_sequences > 0)) score_names <- c(score_names, "hla.score", "lowest.hlas") else hla_info <- FALSE
+  } else {
+    counts_info <- FALSE
+  }
+  patient_info <- "patient" %in% colnames(cdr3_sequences)
+  hla_info <- "HLA" %in% colnames(cdr3_sequences)
+  if (hla_info && patient_info) {
+    if ("patient" %in% colnames(cdr3_sequences) &&
+        "HLA" %in% colnames(cdr3_sequences)) {
+      cdr3_sequences <- cdr3_sequences[
+        cdr3_sequences$HLA != "" & !is.na(cdr3_sequences$HLA), ]
+      if (nrow(cdr3_sequences) > 0) {
+        score_names <- c(score_names, "hla.score", "lowest.hlas")
+      } else {
+        hla_info <- FALSE
+      }
     }
   }
 
   ### load or generate reference tables from reference database
-  # ref_cluster_sizes:            data frame containing the cluster size in the first and the probability of observing a cluster with this size
-  #                               in a sample from the reference database in the second column
-  # vgene_ref_frequencies:        vector containing the (relative) frequencies of v gene usage
-  # cdr3_length_ref_frequencies:  vector containing the (relative) frequencies of CDR3b lengths
   utils::data(ref_cluster_sizes, envir = environment(), package = "immGLIPH")
   ref_cluster_sizes <- ref_cluster_sizes[[ref_cluster_size]]
 
-  if(is.character(refdb_beta) && refdb_beta %in% .valid_reference_names()){
+  if (is.character(refdb_beta) && refdb_beta %in% .valid_reference_names()) {
     reference_list <- .get_reference_list()
     refdb_name <- refdb_beta
     vgene_ref_frequencies <- reference_list[[refdb_name]]$vgene_frequencies$freq
     cdr3_length_ref_frequencies <- reference_list[[refdb_name]]$cdr3_length_frequencies$freq
   } else {
     # User-provided data frame: compute frequencies from the data
-    if("TRBV" %in% colnames(refdb_beta)){
+    if ("TRBV" %in% colnames(refdb_beta)) {
       vgene_ref_frequencies <- as.data.frame(table(refdb_beta$TRBV))
-      vgene_ref_frequencies <- vgene_ref_frequencies$Freq/sum(vgene_ref_frequencies$Freq)
+      vgene_ref_frequencies <- vgene_ref_frequencies$Freq /
+        sum(vgene_ref_frequencies$Freq)
     } else {
       reference_list <- .get_reference_list()
       vgene_ref_frequencies <- reference_list[["gliph_reference"]]$vgene_frequencies$freq
     }
     cdr3_length_ref_frequencies <- as.data.frame(table(nchar(refdb_beta$CDR3b)))
-    cdr3_length_ref_frequencies <- cdr3_length_ref_frequencies$Freq/sum(cdr3_length_ref_frequencies$Freq)
+    cdr3_length_ref_frequencies <- cdr3_length_ref_frequencies$Freq /
+      sum(cdr3_length_ref_frequencies$Freq)
   }
 
-  if(!is.null(v_usage_freq)) vgene_ref_frequencies <- as.numeric(v_usage_freq[,2])
-  if(!is.null(cdr3_length_freq)) cdr3_length_ref_frequencies <- as.numeric(cdr3_length_freq[,2])
+  if (!is.null(v_usage_freq)) {
+    vgene_ref_frequencies <- as.numeric(v_usage_freq[, 2])
+  }
+  if (!is.null(cdr3_length_freq)) {
+    cdr3_length_ref_frequencies <- as.numeric(cdr3_length_freq[, 2])
+  }
 
   ### Obtain the distribution of all patients and HLA alleles in the sample
-  # all_patients:     vector containing all unique patient indices
-  # all_hlas:         vector containing all unique HLA alleles
-  # all_patient_hlas: list whose elements are named after the patients and contain the patient's HLA alleles in a vector.
   all_patient_hlas <- c()
-  if(hla_info == TRUE && patient_info == TRUE){
-    cdr3_sequences$patient <- gsub(":.*", "",cdr3_sequences$patient)
+  if (hla_info && patient_info) {
+    cdr3_sequences$patient <- gsub(":.*", "", cdr3_sequences$patient)
     all_patients <- sort(unique(cdr3_sequences$patient))
     all_patients <- all_patients[!is.na(all_patients)]
     all_hlas <- unlist(strsplit(unique(cdr3_sequences$HLA), ","))
@@ -263,116 +310,134 @@ clusterScoring <- function(cluster_list,
     num_patients <- length(all_patients)
     num_HLAs <- length(all_hlas)
 
-    all_patient_hlas <- lapply(all_patients, function(x){
-      sort(unique(gsub(":.*", "", unlist(strsplit(cdr3_sequences$HLA[cdr3_sequences$patient == x][1], ",")), perl = TRUE)))
+    all_patient_hlas <- lapply(all_patients, function(x) {
+      sort(unique(gsub(
+        ":.*", "",
+        unlist(strsplit(
+          cdr3_sequences$HLA[cdr3_sequences$patient == x][1], ","
+        )),
+        perl = TRUE
+      )))
     })
     names(all_patient_hlas) <- all_patients
 
     all_hlas <- data.frame(HLA = all_hlas)
-    all_hlas$counts <- apply(all_hlas, 1, function(x){
-      val <- 0
-      for(pat in all_patients){
-        if(x %in% all_patient_hlas[[pat]]) val <- val+1
-      }
-      val
-    })
+    all_hlas$counts <- vapply(all_hlas$HLA, function(hla) {
+      sum(vapply(all_patient_hlas, function(pat_hlas) {
+        hla %in% pat_hlas
+      }, logical(1)))
+    }, numeric(1))
   }
 
   #################################################################
   ##                           Scoring                           ##
   #################################################################
 
-  .setup_parallel(n_cores)
+  BPPARAM <- .setup_parallel(n_cores)
 
-  actCluster <- NULL
-  res <- foreach::foreach(actCluster = seq_along(cluster_list)) %dopar% {
+  res <- BiocParallel::bplapply(seq_along(cluster_list), function(actCluster) {
 
     ### Get sequences and information of current cluster
     act_seq_infos <- cluster_list[[actCluster]]
-    num_members <- nrow(act_seq_infos) # number of ALL members
-    ori_num_members <- length(unique(act_seq_infos$CDR3b)) # number of all unique CDR3b sequences
+    num_members <- nrow(act_seq_infos)
+    ori_num_members <- length(unique(act_seq_infos$CDR3b))
     all_scores <- c()
 
     ### Get network size score from lookup table
     score_network_size <- 1
-    nearest_sample_size <- order(abs(1-as.numeric(colnames(ref_cluster_sizes)[-1])/nrow(cdr3_sequences)))[1]
-    if(ori_num_members > 100){
-      score_network_size <-  ref_cluster_sizes[100,nearest_sample_size+1]
+    nearest_sample_size <- order(
+      abs(1 - as.numeric(colnames(ref_cluster_sizes)[-1]) /
+            nrow(cdr3_sequences))
+    )[1]
+    if (ori_num_members > 100) {
+      score_network_size <- ref_cluster_sizes[100, nearest_sample_size + 1]
     } else {
-      score_network_size <-  ref_cluster_sizes[ori_num_members,nearest_sample_size+1]
+      score_network_size <- ref_cluster_sizes[
+        ori_num_members, nearest_sample_size + 1]
     }
     all_scores <- c(all_scores, score_network_size)
 
     ### Enrichment of CDR3 length (spectratype) within cluster
-    score_cdr3_length <- c()
-    # calculate score of sample (product of all frequencies)
     pick_freqs <- data.frame(table(nchar(unique(act_seq_infos$CDR3b))))
     colnames(pick_freqs) <- c("object", "probs")
-    pick_freqs$probs <- pick_freqs$probs/ori_num_members
+    pick_freqs$probs <- pick_freqs$probs / ori_num_members
     sample_score <- round(prod(pick_freqs$probs), digits = 3)
 
     # generate random subsamples
-    random_subsample <- list()
-    for(i in seq_len(sim_depth)){
-      random_subsample[[i]] <- sample.int(n = length(cdr3_length_ref_frequencies), size = ori_num_members,
-                                                prob = cdr3_length_ref_frequencies, replace = TRUE)
-    }
+    random_subsample <- lapply(seq_len(sim_depth), function(i) {
+      sample.int(
+        n = length(cdr3_length_ref_frequencies),
+        size = ori_num_members,
+        prob = cdr3_length_ref_frequencies,
+        replace = TRUE
+      )
+    })
 
-    # calculate score of subsamples (product of all frequencies)
-    pick_freqs <- stringdist::seq_qgrams(.list = random_subsample)[,-1]/ori_num_members
+    # calculate score of subsamples
+    pick_freqs <- stringdist::seq_qgrams(
+      .list = random_subsample
+    )[, -1] / ori_num_members
     pick_freqs[pick_freqs == 0] <- 1
-    pick_freqs <- round(exp(colSums(log(pick_freqs))), digits = 3) # vectorized way to calculate the product of each column
-    if(gliph_version == 1){
-      score_cdr3_length <- sum(pick_freqs >= sample_score)/sim_depth
+    pick_freqs <- round(exp(colSums(log(pick_freqs))), digits = 3)
+    if (gliph_version == 1) {
+      score_cdr3_length <- sum(pick_freqs >= sample_score) / sim_depth
     } else {
-      score_cdr3_length <- sum(pick_freqs > sample_score)/sim_depth
+      score_cdr3_length <- sum(pick_freqs > sample_score) / sim_depth
     }
-    if(score_cdr3_length == 0) score_cdr3_length <- 1/sim_depth # minimum score of 1/sim_depth
+    if (score_cdr3_length == 0) {
+      score_cdr3_length <- 1 / sim_depth
+    }
 
     all_scores <- c(all_scores, score_cdr3_length)
 
     ### Enrichment of v genes within cluster
     score_vgene <- c()
-    if(vgene_info == TRUE){
-
-      # calculate score of sample (product of all frequencies)
+    if (vgene_info) {
       pick_freqs <- data.frame(table(act_seq_infos$TRBV))
       colnames(pick_freqs) <- c("object", "probs")
-      pick_freqs$probs <- pick_freqs$probs/num_members
+      pick_freqs$probs <- pick_freqs$probs / num_members
       sample_score <- round(prod(pick_freqs$probs), digits = 3)
 
-      # generate random subsamples
-      random_subsample <- list()
-      for(i in seq_len(sim_depth)){
-        random_subsample[[i]] <- sample.int(n = length(vgene_ref_frequencies), size = num_members,
-                                                  prob = vgene_ref_frequencies, replace = TRUE)
-      }
+      random_subsample <- lapply(seq_len(sim_depth), function(i) {
+        sample.int(
+          n = length(vgene_ref_frequencies),
+          size = num_members,
+          prob = vgene_ref_frequencies,
+          replace = TRUE
+        )
+      })
 
-      # calculate score of subsamples (product of all frequencies)
-      pick_freqs <- stringdist::seq_qgrams(.list = random_subsample)[,-1]/num_members
+      pick_freqs <- stringdist::seq_qgrams(
+        .list = random_subsample
+      )[, -1] / num_members
       pick_freqs[pick_freqs == 0] <- 1
-      pick_freqs <- round(exp(colSums(log(pick_freqs))), digits = 3) # vectorized way to calculate the product of each column
-      if(gliph_version == 1){
-        score_vgene <- sum(pick_freqs >= sample_score)/sim_depth
+      pick_freqs <- round(exp(colSums(log(pick_freqs))), digits = 3)
+      if (gliph_version == 1) {
+        score_vgene <- sum(pick_freqs >= sample_score) / sim_depth
       } else {
-        score_vgene <- sum(pick_freqs > sample_score)/sim_depth
+        score_vgene <- sum(pick_freqs > sample_score) / sim_depth
       }
 
-      if(score_vgene == 0) score_vgene <- 1/sim_depth # minimum score of 1/sim_depth
+      if (score_vgene == 0) score_vgene <- 1 / sim_depth
       all_scores <- c(all_scores, score_vgene)
     }
 
     ### Enrichment of clonal expansion within cluster
     score_clonal_expansion <- c()
-    if(counts_info == TRUE){
-      sample_score <- sum(as.numeric(act_seq_infos$counts))/num_members
-      counter <- 0
-      for(i in seq_len(sim_depth)){
-        random_subsample <- sample(x = cdr3_sequences$counts, size = num_members, replace = FALSE)
-        test_score <- sum(as.numeric(random_subsample))/num_members
-        if(test_score>=sample_score) counter <- counter+1
+    if (counts_info) {
+      sample_score <- sum(as.numeric(act_seq_infos$counts)) / num_members
+      test_scores <- vapply(seq_len(sim_depth), function(i) {
+        random_subsample <- sample(
+          x = cdr3_sequences$counts, size = num_members, replace = TRUE
+        )
+        sum(as.numeric(random_subsample)) / num_members
+      }, numeric(1))
+      counter <- sum(test_scores >= sample_score)
+      if (counter == 0) {
+        score_clonal_expansion <- 1 / sim_depth
+      } else {
+        score_clonal_expansion <- counter / sim_depth
       }
-      if(counter == 0) score_clonal_expansion <- 1/sim_depth else score_clonal_expansion <- counter/sim_depth
       score_clonal_expansion <- round(score_clonal_expansion, digits = 3)
 
       all_scores <- c(all_scores, score_clonal_expansion)
@@ -381,77 +446,95 @@ clusterScoring <- function(cluster_list,
     ### Enrichment of common HLA among donor TCR contributors in cluster
     score_hla <- c()
     lowest_hla <- ""
-    if(hla_info == TRUE && patient_info == TRUE){
-      act_seq_infos <- act_seq_infos[act_seq_infos$HLA != "" & !is.na(act_seq_infos$HLA),]
+    if (hla_info && patient_info) {
+      act_seq_infos <- act_seq_infos[
+        act_seq_infos$HLA != "" & !is.na(act_seq_infos$HLA), ]
 
-      if(nrow(act_seq_infos) > 0){
-        act_seq_infos$patient <- gsub(":.*", "",act_seq_infos$patient)
+      if (nrow(act_seq_infos) > 0) {
+        act_seq_infos$patient <- gsub(":.*", "", act_seq_infos$patient)
 
-      score_hla <- 1
-      for(act_hla in seq_len(num_HLAs)){
-        crg_patient_count <- length(unique(act_seq_infos$patient))
-        crg_patient_hla_count <- sum(unlist(lapply(all_patient_hlas[unique(act_seq_infos$patient)], function(x){
-          if(all_hlas$HLA[act_hla] %in% x) 1 else 0
-        })))
-        if(crg_patient_hla_count > 1){
-          act_Prob <- sum(choose(all_hlas$counts[act_hla], crg_patient_hla_count:crg_patient_count)*choose(num_patients-all_hlas$counts[act_hla], crg_patient_count-crg_patient_hla_count:crg_patient_count)/choose(num_patients, crg_patient_count))
-          if(act_Prob<score_hla) score_hla <- act_Prob
-          if(act_Prob < hla_cutoff){
-            if(lowest_hla == ""){
-              lowest_hla <- paste(all_hlas$HLA[act_hla],
-                                        " [(", crg_patient_hla_count, "/", crg_patient_count, ") vs (",
-                                        all_hlas$counts[act_hla], "/", num_patients,
-                                        ") = ",
-                                        formatC(act_Prob, digits = 1, format = "e"),
-                                        "]",
-                                        sep = "" )
-            } else {
-              lowest_hla <- paste(lowest_hla, ", ", all_hlas$HLA[act_hla],
-                                        " [(", crg_patient_hla_count, "/", crg_patient_count, ") vs (",
-                                        all_hlas$counts[act_hla], "/", num_patients,
-                                        ") = ",
-                                        formatC(act_Prob, digits = 1, format = "e"),
-                                        "]",
-                                        sep = "" )
+        score_hla <- 1
+        for (act_hla in seq_len(num_HLAs)) {
+          crg_patient_count <- length(unique(act_seq_infos$patient))
+          crg_patient_hla_count <- sum(vapply(
+            all_patient_hlas[unique(act_seq_infos$patient)],
+            function(x) {
+              if (all_hlas$HLA[act_hla] %in% x) 1L else 0L
+            }, integer(1)
+          ))
+          if (crg_patient_hla_count > 1) {
+            act_Prob <- sum(
+              choose(
+                all_hlas$counts[act_hla],
+                crg_patient_hla_count:crg_patient_count
+              ) *
+              choose(
+                num_patients - all_hlas$counts[act_hla],
+                crg_patient_count -
+                  crg_patient_hla_count:crg_patient_count
+              ) /
+              choose(num_patients, crg_patient_count)
+            )
+            if (act_Prob < score_hla) score_hla <- act_Prob
+            if (act_Prob < hla_cutoff) {
+              hla_str <- paste0(
+                all_hlas$HLA[act_hla],
+                " [(", crg_patient_hla_count, "/",
+                crg_patient_count, ") vs (",
+                all_hlas$counts[act_hla], "/", num_patients,
+                ") = ",
+                formatC(act_Prob, digits = 1, format = "e"),
+                "]"
+              )
+              if (lowest_hla == "") {
+                lowest_hla <- hla_str
+              } else {
+                lowest_hla <- paste(lowest_hla, ",", hla_str)
+              }
             }
           }
         }
-
-      }
       } else {
-      score_hla <- 1
+        score_hla <- 1
       }
 
       all_scores <- c(all_scores, score_hla)
     }
 
     ### Total score
-    if(gliph_version == 1) score_final <- prod(all_scores)*0.001*64 else if(gliph_version == 2) score_final <- prod(all_scores)
+    if (gliph_version == 1) {
+      score_final <- prod(all_scores) * 0.001 * 64
+    } else {
+      score_final <- prod(all_scores)
+    }
 
     ### Output
     all_scores <- c(score_final, all_scores)
     all_scores <- formatC(all_scores, digits = 1, format = "e")
     output <- c(names(cluster_list)[actCluster], all_scores)
-    if(hla_info == TRUE && patient_info == TRUE){
+    if (hla_info && patient_info) {
       output <- c(output, lowest_hla)
     }
     output
-  }
+  }, BPPARAM = BPPARAM)
 
-  .stop_parallel()
-
-  res <- data.frame(matrix(unlist(res), ncol = 2+length(score_names), byrow = TRUE))
+  res <- data.frame(
+    matrix(unlist(res), ncol = 2 + length(score_names), byrow = TRUE)
+  )
   colnames(res) <- c("leader.tag", "total.score", score_names)
 
-  for(i in c("total.score", score_names)) if(i != "lowest.hlas") res[,i] <- as.numeric(res[,i])
+  for (i in c("total.score", score_names)) {
+    if (i != "lowest.hlas") res[, i] <- as.numeric(res[, i])
+  }
 
-  # set all theoretical numeric values (actually characters) to numeric values
-  if(is.data.frame(res)){
-    for(i in seq_len(ncol(res))){
-      if(suppressWarnings(any(is.na(as.numeric(res[,i])))) == FALSE) res[,i] <- as.numeric(res[,i])
+  # set all theoretical numeric values to numeric
+  if (is.data.frame(res)) {
+    for (i in seq_len(ncol(res))) {
+      if (!suppressWarnings(any(is.na(as.numeric(res[, i]))))) {
+        res[, i] <- as.numeric(res[, i])
+      }
     }
   }
 
-  # Closing time!
-  return(res[,-1])
+  return(res[, -1])
 }

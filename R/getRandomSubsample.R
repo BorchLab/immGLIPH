@@ -52,86 +52,121 @@ getRandomSubsample <- function(cdr3_len_stratify = FALSE,
                                motif_region_vgenes_list,
                                ref_motif_vgenes_id_list,
                                ref_lengths_vgenes_list,
-                               lengths_vgenes_list){
+                               lengths_vgenes_list) {
   random_subsample <- c()
 
   ### Return an unbiased reference subsample
-  if(cdr3_len_stratify == FALSE && vgene_stratify == FALSE){
-    random_subsample <- refseqs_motif_region[sample(x = seq_along(refseqs_motif_region),size = length(motif_region),replace = FALSE)]
+  if (!cdr3_len_stratify && !vgene_stratify) {
+    random_subsample <- refseqs_motif_region[
+      sample(
+        x = seq_along(refseqs_motif_region),
+        size = length(motif_region),
+        replace = FALSE
+      )
+    ]
   }
 
-  ### Return a reference subsample with biased CDR3b length distribution according to the sample
-  if(cdr3_len_stratify == TRUE && vgene_stratify == FALSE){
-
-    ## if there are more seqs with specific cdr3 length in sample than in reference database, surplus number of seqs will be taken randomly from remaining seqs with different cdr3 length
+  ### Return a reference subsample with biased CDR3b length distribution
+  if (cdr3_len_stratify && !vgene_stratify) {
     random_length <- 0
     subsample_parts <- vector("list", length(motif_lengths_list))
     idx <- 0L
-    for(cdr3_length in names(motif_lengths_list)){
+    for (cdr3_length in names(motif_lengths_list)) {
       idx <- idx + 1L
-      if(length(ref_motif_lengths_id_list[[cdr3_length]]) < motif_lengths_list[[cdr3_length]]){
-        random_length <- random_length + motif_lengths_list[[cdr3_length]] - length(ref_motif_lengths_id_list[[cdr3_length]])
-        subsample_parts[[idx]] <- ref_motif_lengths_id_list[[cdr3_length]]
-      }else {
-        subsample_parts[[idx]] <- sample(x = ref_motif_lengths_id_list[[cdr3_length]],size = motif_lengths_list[[cdr3_length]],replace = FALSE)
+      ref_ids <- ref_motif_lengths_id_list[[cdr3_length]]
+      needed <- motif_lengths_list[[cdr3_length]]
+      if (length(ref_ids) < needed) {
+        random_length <- random_length + needed - length(ref_ids)
+        subsample_parts[[idx]] <- ref_ids
+      } else {
+        subsample_parts[[idx]] <- sample(
+          x = ref_ids, size = needed, replace = FALSE
+        )
       }
     }
     random_subsample <- unlist(subsample_parts)
-    if(random_length > 0){
-      random_subsample <- c(random_subsample, sample(x = (seq_along(refseqs_motif_region))[-random_subsample],size = random_length,replace = FALSE))
+    if (random_length > 0) {
+      random_subsample <- c(
+        random_subsample,
+        sample(
+          x = seq_along(refseqs_motif_region)[-random_subsample],
+          size = random_length,
+          replace = FALSE
+        )
+      )
     }
     random_subsample <- refseqs_motif_region[random_subsample]
   }
 
-  ### Return a reference subsample with biased V gene distribution according to the sample
-  if(vgene_stratify == TRUE && cdr3_len_stratify == FALSE){
-
-    ## if there are more seqs with specific v gene in sample than in reference database, surplus number of seqs will be taken randomly from remaining seqs with different vgenes
+  ### Return a reference subsample with biased V gene distribution
+  if (vgene_stratify && !cdr3_len_stratify) {
     random_length <- 0
     subsample_parts <- vector("list", length(motif_region_vgenes_list))
     idx <- 0L
-    for(act_vgene in names(motif_region_vgenes_list)){
+    for (act_vgene in names(motif_region_vgenes_list)) {
       idx <- idx + 1L
-      if(length(ref_motif_vgenes_id_list[[act_vgene]]) < motif_region_vgenes_list[[act_vgene]]){
-        random_length <- random_length + motif_region_vgenes_list[[act_vgene]] - length(ref_motif_vgenes_id_list[[act_vgene]])
-        subsample_parts[[idx]] <- ref_motif_vgenes_id_list[[act_vgene]]
-      }else {
-        subsample_parts[[idx]] <- sample(x = ref_motif_vgenes_id_list[[act_vgene]],size = motif_region_vgenes_list[[act_vgene]],replace = FALSE)
+      ref_ids <- ref_motif_vgenes_id_list[[act_vgene]]
+      needed <- motif_region_vgenes_list[[act_vgene]]
+      if (length(ref_ids) < needed) {
+        random_length <- random_length + needed - length(ref_ids)
+        subsample_parts[[idx]] <- ref_ids
+      } else {
+        subsample_parts[[idx]] <- sample(
+          x = ref_ids, size = needed, replace = FALSE
+        )
       }
     }
     random_subsample <- unlist(subsample_parts)
-    if(random_length > 0){
-      random_subsample <- c(random_subsample, sample(x = (seq_along(refseqs_motif_region))[-random_subsample],size = random_length,replace = FALSE))
+    if (random_length > 0) {
+      random_subsample <- c(
+        random_subsample,
+        sample(
+          x = seq_along(refseqs_motif_region)[-random_subsample],
+          size = random_length,
+          replace = FALSE
+        )
+      )
     }
     random_subsample <- refseqs_motif_region[random_subsample]
   }
 
-  ### Return a reference subsample with biased V gene and CDR3b length distribution according to the sample
-  if(vgene_stratify == TRUE && cdr3_len_stratify == TRUE){
-
-    ## if there are more seqs with specific v gene or CDR3b length in sample than in reference database, surplus number of seqs will be taken randomly from remaining seqs
+  ### Return a reference subsample with biased V gene and CDR3b length distribution
+  if (vgene_stratify && cdr3_len_stratify) {
     random_length <- 0
-    subsample_parts <- vector("list", length(motif_lengths_list) * length(motif_region_vgenes_list))
+    subsample_parts <- vector(
+      "list",
+      length(motif_lengths_list) * length(motif_region_vgenes_list)
+    )
     idx <- 0L
-    for(cdr3_length in names(motif_lengths_list)){
-      for(act_vgene in names(motif_region_vgenes_list)){
+    for (cdr3_length in names(motif_lengths_list)) {
+      for (act_vgene in names(motif_region_vgenes_list)) {
         idx <- idx + 1L
-        if(length(ref_lengths_vgenes_list[[cdr3_length]][[act_vgene]]) < lengths_vgenes_list[[cdr3_length]][[act_vgene]]){
-          random_length <- random_length + lengths_vgenes_list[[cdr3_length]][[act_vgene]] - length(ref_lengths_vgenes_list[[cdr3_length]][[act_vgene]])
-          subsample_parts[[idx]] <- ref_lengths_vgenes_list[[cdr3_length]][[act_vgene]]
-        }else {
-          subsample_parts[[idx]] <- sample(x = ref_lengths_vgenes_list[[cdr3_length]][[act_vgene]],size = lengths_vgenes_list[[cdr3_length]][[act_vgene]],replace = FALSE)
+        ref_ids <- ref_lengths_vgenes_list[[cdr3_length]][[act_vgene]]
+        needed <- lengths_vgenes_list[[cdr3_length]][[act_vgene]]
+        if (length(ref_ids) < needed) {
+          random_length <- random_length + needed - length(ref_ids)
+          subsample_parts[[idx]] <- ref_ids
+        } else {
+          subsample_parts[[idx]] <- sample(
+            x = ref_ids, size = needed, replace = FALSE
+          )
         }
       }
     }
     random_subsample <- unlist(subsample_parts)
 
-    if(random_length > 0){
-      random_subsample <- c(random_subsample, sample(x = (seq_along(refseqs_motif_region))[-random_subsample],size = random_length,replace = FALSE))
+    if (random_length > 0) {
+      random_subsample <- c(
+        random_subsample,
+        sample(
+          x = seq_along(refseqs_motif_region)[-random_subsample],
+          size = random_length,
+          replace = FALSE
+        )
+      )
     }
     random_subsample <- refseqs_motif_region[random_subsample]
   }
 
-  ## Closing time!
   return(random_subsample)
 }

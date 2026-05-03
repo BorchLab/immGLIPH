@@ -1,8 +1,5 @@
 # Tests for .local_rrs()
 
-# Register sequential backend for %dopar%
-foreach::registerDoSEQ()
-
 # ---- Helper: small synthetic data ------------------------------------------
 
 .make_rrs_data <- function() {
@@ -54,7 +51,7 @@ test_that(".local_rrs returns list with sample_log, selected_motifs, all_motifs"
     discontinuous_motifs     = FALSE,
     cdr3_len_stratify        = FALSE,
     vgene_stratify           = FALSE,
-    no_cores                 = 1,
+    BPPARAM                  = BiocParallel::SerialParam(),
     verbose                  = FALSE,
     motif_lengths_list       = list(),
     ref_motif_lengths_id_list = list(),
@@ -88,7 +85,7 @@ test_that(".local_rrs sample_log has sim_depth + 1 rows", {
     discontinuous_motifs     = FALSE,
     cdr3_len_stratify        = FALSE,
     vgene_stratify           = FALSE,
-    no_cores                 = 1,
+    BPPARAM                  = BiocParallel::SerialParam(),
     verbose                  = FALSE,
     motif_lengths_list       = list(),
     ref_motif_lengths_id_list = list(),
@@ -119,7 +116,7 @@ test_that(".local_rrs all_motifs has expected columns", {
     discontinuous_motifs     = FALSE,
     cdr3_len_stratify        = FALSE,
     vgene_stratify           = FALSE,
-    no_cores                 = 1,
+    BPPARAM                  = BiocParallel::SerialParam(),
     verbose                  = FALSE,
     motif_lengths_list       = list(),
     ref_motif_lengths_id_list = list(),
@@ -151,7 +148,7 @@ test_that(".local_rrs p-values are in (0, 1]", {
     discontinuous_motifs     = FALSE,
     cdr3_len_stratify        = FALSE,
     vgene_stratify           = FALSE,
-    no_cores                 = 1,
+    BPPARAM                  = BiocParallel::SerialParam(),
     verbose                  = FALSE,
     motif_lengths_list       = list(),
     ref_motif_lengths_id_list = list(),
@@ -177,7 +174,7 @@ test_that(".local_rrs kmer_mindepth filters correctly", {
     motif_length = 2, sim_depth = 5, kmer_mindepth = 5,
     lcminp = 1.0, lcminove = 0, discontinuous_motifs = FALSE,
     cdr3_len_stratify = FALSE, vgene_stratify = FALSE,
-    no_cores = 1, verbose = FALSE,
+    BPPARAM = BiocParallel::SerialParam(), verbose = FALSE,
     motif_lengths_list = list(), ref_motif_lengths_id_list = list(),
     motif_region_vgenes_list = list(), ref_motif_vgenes_id_list = list(),
     lengths_vgenes_list = list(), ref_lengths_vgenes_list = list()
@@ -198,7 +195,7 @@ test_that(".local_rrs strict lcminp yields fewer selected motifs", {
       motif_length = 2, sim_depth = 5, kmer_mindepth = 1,
       lcminp = lcminp, lcminove = 0, discontinuous_motifs = FALSE,
       cdr3_len_stratify = FALSE, vgene_stratify = FALSE,
-      no_cores = 1, verbose = FALSE,
+      BPPARAM = BiocParallel::SerialParam(), verbose = FALSE,
       motif_lengths_list = list(), ref_motif_lengths_id_list = list(),
       motif_region_vgenes_list = list(), ref_motif_vgenes_id_list = list(),
       lengths_vgenes_list = list(), ref_lengths_vgenes_list = list()
