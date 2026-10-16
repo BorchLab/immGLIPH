@@ -1,7 +1,37 @@
-citHeader("To cite immGLIPH, please cite the original GLIPH papers:")
+citHeader("To cite immGLIPH in publications, please use:")
 
 bibentry(
   bibtype  = "Article",
+  title    = "Single-cell sequencing of non-infectious and viral uveitis defines distinct mechanisms in ocular inflammation",
+  author   = c(
+    person("Andrei", "Belean"),
+    person("Shiori", "Kuramoto"),
+    person("Isabel", "Risch"),
+    person(c("Lynn", "M."), "Hassman"),
+    person("Atsunobu", "Takeda"),
+    person("Koh-Hei", "Sonoda"),
+    person("Nobuyo", "Yawata"),
+    person(c("Nicholas", "C."), "Borcherding"),
+    person(c("Michael", "A."), "Paley")
+  ),
+  journal  = "Frontiers in Immunology",
+  year     = "2026",
+  volume   = "17",
+  pages    = "1916535",
+  doi      = "10.3389/fimmu.2026.1916535",
+  textVersion = paste(
+    "Belean A, Kuramoto S, Risch I, Hassman LM, Takeda A, Sonoda K-H,",
+    "Yawata N, Borcherding NC, Paley MA (2026).",
+    "\"Single-cell sequencing of non-infectious and viral uveitis defines",
+    "distinct mechanisms in ocular inflammation.\"",
+    "Frontiers in Immunology, 17, 1916535.",
+    "doi:10.3389/fimmu.2026.1916535"
+  )
+)
+
+bibentry(
+  bibtype  = "Article",
+  header   = "immGLIPH implements the GLIPH and GLIPH2 algorithms. Please also cite the original publications:",
   title    = "Identifying specificity groups in the T cell receptor repertoire",
   author   = c(
     person("Jacob", "Glanville"),
